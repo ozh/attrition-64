@@ -7,7 +7,11 @@ one line to the registry. No engine code changes.
 ## Two steps
 
 1. Create `src/levels/NN-item-target.js` (see the template below).
-2. Add its filename to the `FILES` array in `src/levels/index.js`.
+2. Add its filename to the `LEVEL_FILES` array in `src/levels/index.js`.
+
+If you forget step 2 the test suite fails and tells you so — the registry is
+compared against the directory. It cannot be built from the directory at run
+time: browsers cannot list one, and GitHub Pages serves no index for it.
 
 The filename is the level's identity. `05-chainsaw-tree.js` becomes the id
 `chainsaw-tree` — the leading number is ordering only — so there is no id field

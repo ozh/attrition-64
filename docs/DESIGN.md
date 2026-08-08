@@ -99,11 +99,19 @@ is a 1×1 cell AABB.
 ## Level file format
 
 One ES module per level in `src/levels/`, default-exporting a plain object.
-Registered by adding its filename to the `FILES` array in `src/levels/index.js`.
+Registered by adding its filename to the `LEVEL_FILES` array in
+`src/levels/index.js`.
 
 The filename is the level's identity: `01-cigarette-lungs.js` yields the id
 `cigarette-lungs`. Ids therefore cannot collide — the filesystem guarantees it —
 and no level carries an id field to keep in sync with its own name.
+
+The list is kept by hand because it has to be. A browser has no directory API,
+and GitHub Pages returns 404 for a directory with no `index.html`. Local servers
+generally *do* serve a listing, so discovering levels by scraping one would pass
+every test and then fail only in production. Instead `test/levels.test.js`
+compares the array against the directory — Node can see both — so an unregistered
+file fails the suite rather than disappearing silently.
 
 Imports are dynamic for a reason beyond that. A **static** import of a level with
 a syntax error fails the whole module, taking every other level down with it,

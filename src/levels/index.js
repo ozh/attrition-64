@@ -1,9 +1,17 @@
 import { validateLevel, LevelValidationError } from './validate.js';
 
-// Adding a level: put the file in this directory and add its name here.
-// That is the whole registration step — the filename is the level's identity,
-// so there is no id to keep in sync inside the file.
-const FILES = [
+/**
+ * Adding a level: put the file in this directory and add its name here.
+ * That is the whole registration step — the filename is the level's identity,
+ * so there is no id to keep in sync inside the file.
+ *
+ * Why a hand-kept list and not the directory contents: a browser cannot list a
+ * directory, and GitHub Pages serves no index for one. Local servers usually
+ * do, so scraping a listing would pass every test here and 404 in production.
+ * `test/levels.test.js` compares this array against the directory instead, so
+ * forgetting a line fails loudly at the only point that can see both.
+ */
+export const LEVEL_FILES = [
   '01-cigarette-lungs.js',
   '02-bottle-liver.js',
   '03-phone-brain.js',
@@ -29,7 +37,7 @@ export function idFromFilename(file) {
 export async function loadLevels(log = console) {
   const levels = [];
 
-  for (const file of FILES) {
+  for (const file of LEVEL_FILES) {
     const id = idFromFilename(file);
     try {
       const module = await import(`./${file}`);

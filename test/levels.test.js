@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { loadLevels, idFromFilename } from '../src/levels/index.js';
+import { readdirSync } from 'node:fs';
+import { loadLevels, idFromFilename, LEVEL_FILES } from '../src/levels/index.js';
 import { validateLevel, estimateHitsToClear } from '../src/levels/validate.js';
 import lungs from '../src/levels/01-cigarette-lungs.js';
 
@@ -56,4 +57,18 @@ test('the lung silhouette is exactly left-right symmetric', () => {
     const matches = [...row].filter((ch, x) => (ch === '.') === (mirrored[x] === '.')).length;
     assert.equal(matches, 64, `row ${i} silhouette is not symmetric`);
   }
+});
+
+test('the registry lists exactly the level files on disk', () => {
+  // A browser cannot read a directory and GitHub Pages serves no index, so the
+  // runtime has to be told which files exist. Node can see both, which makes
+  // this the only place the two can be compared — and the only thing standing
+  // between a contributor forgetting a line and their level silently vanishing.
+  const onDisk = readdirSync(new URL('../src/levels/', import.meta.url))
+    .filter((name) => /^\d+[-_].+\.js$/.test(name))
+    .sort();
+
+  assert.deepEqual([...LEVEL_FILES].sort(), onDisk,
+    'src/levels/index.js is out of step with the directory: add the new file to LEVEL_FILES, '
+    + 'or remove the entry for a file that no longer exists');
 });
