@@ -96,14 +96,23 @@ It opens pre-filled with the shipped cigarette/lungs level as a worked example.
 ```
 index.html            page shell
 src/config.js         every tunable constant
-src/game.js           state machine and rules
+src/game.js           run lifecycle: states, lives, level progression
+src/simulation.js     one frame of play: balls, destruction, drops, shots
 src/engine/           DOM-free game logic, unit-tested
 src/render/           canvas drawing
 src/levels/           one module per level, plus the validator
-tools/preview.html    level previewer and sound check
+tools/preview.html    level previewer
 tools/gen-*.mjs       generators for the shipped art and sound effects
 test/                 node --test suites
+docs/DESIGN.md        why the game is built the way it is
+docs/ADDING_A_LEVEL.md  the level format, in detail
 ```
 
 `src/engine/` never touches the DOM. That is what lets the interesting logic —
 collision, explosions, effect timers — be tested under Node without a browser.
+
+If you are about to change something and want to know why it is that way,
+[docs/DESIGN.md](docs/DESIGN.md) is the place to look. It records the reasoning
+behind the decisions that are not obvious from the code — why explosions do not
+chain on bulk blocks, why the upscale factor is computed in device pixels, why
+levels are character grids rather than images.

@@ -11,8 +11,8 @@ kept out of the repository.
 
 Read these rather than duplicating them here — this file goes stale, they do not:
 
-- `docs/superpowers/specs/2026-08-08-attrition-64-design.md` — the design and,
-  more usefully, *why* each decision went the way it did
+- `docs/DESIGN.md` — the design and, more usefully, *why* each decision went the
+  way it did
 - `docs/ADDING_A_LEVEL.md` — the level format
 - `README.md` — how to play and run
 
