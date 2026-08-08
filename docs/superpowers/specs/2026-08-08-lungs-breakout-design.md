@@ -1,0 +1,492 @@
+# Lungs — a pixel breakout where the paddle is the threat
+
+**Date:** 2026-08-08
+**Status:** Approved design
+
+## Concept
+
+A pixel-art breakout game. The paddle is an everyday item; the blocks form the
+silhouette of something that item is a threat to. The first level is a cigarette
+paddle against a wall of lung-shaped blocks.
+
+The game makes no argument about it. There is no commentary, no message screen,
+no level titles — the sprites carry the whole idea and the player draws their own
+conclusion. The only text in the game is the HUD (score, lives, level number) and
+`GAME OVER`.
+
+The project is built to accept levels from strangers. Adding a new item/target
+pair is a single new file plus a one-line registry edit, and a load-time
+validator makes that PR cheap to review.
+
+## Goals
+
+- A breakout that is genuinely good to play, not a demo of an idea.
+- New levels contributed by PR, with no engine changes required.
+- Runs as static files on GitHub Pages.
+- Playable on a phone as a first-class target, not as an afterthought.
+- No build step, no dependencies.
+
+## Non-goals
+
+- Music, online leaderboards, accounts.
+- A level editor. (A standalone level previewer is a plausible later addition,
+  not part of this work.)
+- Any narrative, tutorial, or educational framing.
+- Shipping sound assets. The game loads sounds if present and is silent if not;
+  the files themselves are supplied separately.
+
+## Hosting and local development
+
+The game is static files loaded as ES modules. Two consequences bind the whole
+design:
+
+- **Relative paths only.** Never a leading `/`. GitHub Pages serves the project
+  from `/<repo>/`, so absolute paths break there while working locally.
+- **It must be served over HTTP,** not opened from `file://`, because ES modules
+  are subject to CORS.
+
+Locally this is already solved: the `dev-web` Docker container mounts
+`/home/ozh/dev` at `/var/www/html` and serves port 80, so the project is
+reachable at **http://localhost/lungs/** with no extra server. Verified by
+probe on 2026-08-08. Container shell access is
+`docker exec -it dev-web bash --login`, then `cd lungs`.
+
+Tests run on the host with Node 24's built-in runner (`node --test`), which needs
+no dependencies and never touches the browser.
+
+## Geometry
+
+One **cell** is the atomic unit of both layout and physics. The playfield is
+**64 wide × 100 tall** cells.
+
+| Rows   | Contents                                        |
+| ------ | ----------------------------------------------- |
+| 0–4    | HUD: score, lives, level                        |
+| 5–68   | block grid — the authored 64×64, mapped 1:1      |
+| 69–89  | open play space                                 |
+| 90–99  | paddle band                                     |
+| ≥100   | drain (ball lost)                               |
+
+Authored grid row `r` renders at playfield row `5 + r`. The paddle's trimmed
+sprite rests with its bottom edge on row 97.
+
+### Rendering
+
+The backing canvas is **4 pixels per cell** (256 × 400). Each block is drawn as a
+3×3 square inside its 4×4 cell, leaving a 1px gap — this gap is what produces the
+fine grid texture of the reference image. The canvas is upscaled by an **integer
+factor** with `image-rendering: pixelated`, so pixels stay square and crisp at any
+size. A non-integer fit is deliberately avoided; the canvas is letterboxed instead.
+
+The integer factor is computed in **device pixels, not CSS pixels**. This is the
+detail that makes the game fill a phone screen: a 390pt-wide phone admits only ×1
+in CSS pixels (a 256pt game on a 390pt screen, uselessly small), but at DPR 3 it
+has 1170 device pixels, which admits ×4 — about 341pt wide, filling the screen
+while staying pixel-perfect. The canvas backing store is sized in device pixels
+and the CSS size is set to `scale * base / dpr`.
+
+The scale calculation lives in `src/render/scale.js` as a pure function of
+`{ viewportW, viewportH, dpr }`, so it is unit-tested rather than eyeballed.
+
+Physics runs in float cell units and is independent of the render scale. The ball
+is a 1×1 cell AABB.
+
+## Level file format
+
+One ES module per level in `src/levels/`, default-exporting a plain object.
+Registered by a single line in `src/levels/index.js`.
+
+```js
+export default {
+  id: 'cigarette-lungs',
+  item: 'Cigarette',
+  target: 'Lungs',
+  author: 'ozh',
+  background: '#000000',
+  ballColor: '#ffffff',
+
+  types: {
+    '#': { color: '#f0f0f0', hp: 1, points: 10 },
+    'B': { color: '#c8a0a0', hp: 3, points: 30,
+           damage: ['#c8a0a0', '#8a6060', '#503030'] },
+    '*': { color: '#ff5030', hp: 1, points: 50, explode: 3 },
+    'p': { color: '#f0f0f0', hp: 1, powerup: 0.2 },
+    'm': { color: '#80c0ff', hp: 1, powerup: { chance: 1, kind: 'multiball' } },
+    '=': { color: '#404040', solid: true },
+  },
+
+  grid: [ /* exactly 64 strings of exactly 64 chars; '.' and ' ' are empty */ ],
+
+  paddle: {
+    colors: { W: '#ffffff', o: '#e8a06a', r: '#ff6030' },
+    grid: [ /* up to 48 rows × 64 cols; engine trims to the filled bbox */ ],
+  },
+}
+```
+
+### Block type fields
+
+| Field    | Meaning                                                                 |
+| -------- | ----------------------------------------------------------------------- |
+| `color`  | Required. Hex. The block's colour at full health.                       |
+| `hp`     | Hits to destroy. Default `1`.                                           |
+| `points` | Score awarded on destruction. Default `10 × hp`.                        |
+| `damage` | Optional array of colours, one per remaining-hp state, ordered from full health down: `damage[0]` at full hp, `damage[hp-1]` at one hit from breaking. Length must equal `hp`. When present it overrides `color` for rendering; `color` stays required as the type's nominal colour. |
+| `explode`| On destruction, also destroys every cell within this Chebyshev radius.   |
+| `chain`  | Whether this block's explosion can set off other explosive blocks. Default `true`. |
+| `powerup`| Drop chance. A number is shorthand for `{ chance: n }` with a random kind. Object form: `{ chance, kind }` or `{ chance, kinds: [...] }`. |
+| `solid`  | Indestructible. Bounces the ball, never breaks, excluded from the clear condition. |
+
+A level is cleared when no destructible blocks remain. `solid` blocks do not
+prevent a clear.
+
+### Why a character grid
+
+A 64-row char grid diffs legibly: a reviewer reading the PR literally sees the
+shape. A PNG would be easier to draw but is binary and unreviewable. JSON was
+rejected for forbidding comments and trailing commas, which matters when
+hand-editing 64 rows.
+
+### The paddle canvas
+
+`paddle.grid` is up to 64×48 — that is *authoring room*, not the paddle's size,
+exactly as the 64×64 block canvas is not expected to be filled. A 10×1 cigarette
+and a 20×5 chainsaw are both drawn on the same canvas. `sprite.js` trims to the
+filled bounding box, and that box is the collision box: the shape you draw is the
+shape that hits.
+
+## Contribution safety: `validate.js`
+
+Every level passes through the validator at load. This is what makes merging a
+stranger's PR cheap — the reviewer checks that the art looks right, and the
+validator checks everything else. Failures throw `LevelValidationError` naming
+the level id and the offending field.
+
+Rules:
+
+- `id` non-empty and unique across the registry; `item`, `target` non-empty.
+- `grid` has exactly 64 entries, each exactly 64 characters.
+- Every non-empty character in `grid` has an entry in `types`.
+- Type entries: `color` a valid `#rgb`/`#rrggbb`; `hp` an integer ≥ 1 unless
+  `solid`; `damage` length equals `hp` with all colours valid; `explode` an
+  integer ≥ 1; `chain` a boolean; `powerup.chance` within `[0, 1]` and every
+  `kind` a known powerup.
+- **Estimated hits to clear is within 80–600.** Computed at load from filled
+  cells, hit points, and blast radii. This is the rule that catches the failure
+  mode a contributor is most likely to ship — a beautiful 1,700-cell silhouette
+  that takes twenty minutes to clear — and it catches it before a human reviewer
+  has to play the level to notice.
+- At least one destructible block exists.
+- `paddle.grid` has 1–48 rows of ≤ 64 characters; every non-empty character has
+  an entry in `paddle.colors`.
+- The paddle's **trimmed** bounding box is 10–24 cells wide and 1–8 cells tall.
+  The width range is a balance guardrail (the playfield is 64 wide, so this is
+  roughly an eighth to a third of the screen). The height cap exists because the
+  authoring canvas is 48 tall and an untrimmed paddle would consume the
+  playfield.
+- `background` and `ballColor` are valid colours.
+
+### Load failure behaviour
+
+The registry loader validates each level independently. An invalid level is
+logged to the console with its `LevelValidationError` and excluded from the
+rotation, so one bad contribution cannot white-screen the game. If no valid
+levels remain, the canvas renders an error message.
+
+## Module layout
+
+Budget: **no file over roughly 200 lines, no function over roughly 40.**
+`src/engine/` and `src/levels/validate.js` are DOM-free and unit-tested; only
+`src/render/` and `src/input.js` touch the browser.
+
+```
+index.html                       relative paths only
+README.md
+src/config.js                    every tunable: speeds, durations, cell px, grid dims
+src/main.js                      bootstrap + requestAnimationFrame loop
+src/game.js                      state machine
+src/input.js                     keyboard/mouse/touch → a plain intent object
+src/storage.js                   localStorage wrapper, namespaced + try/catch
+src/audio.js                     sfx loader, element pools, mute toggle
+src/engine/sprite.js             char grid + palette → trimmed bitmap
+src/engine/grid.js               block state, damage, clear detection
+src/engine/explode.js            chain explosion flood
+src/engine/collide.js            swept per-axis resolution
+src/engine/ball.js               ball entity + step
+src/engine/paddle.js             movement + deflection
+src/engine/powerups.js           falling drops
+src/engine/effects.js            active-effect registry and timers
+src/engine/lasers.js             shots
+src/render/scale.js              pure fit calculation (device-pixel integer factor)
+src/render/canvas.js             backing canvas, upscale, letterbox, safe areas
+src/render/field.js              blocks
+src/render/entities.js           paddle, balls, drops, lasers
+src/render/hud.js                score/lives/level + a 3×5 bitmap font
+src/levels/index.js              registry — one line per level
+src/levels/validate.js           schema + balance checks
+src/levels/01-cigarette-lungs.js
+assets/sfx/                      empty; documented filenames, supplied separately
+test/*.test.js                   node --test, no dependencies
+docs/ADDING_A_LEVEL.md
+```
+
+`sprite.js` serves both the block grid and the paddle. That shared path is what
+keeps two different authoring canvases on one code path: trim to the filled
+bounding box, map characters through a palette.
+
+All tunable constants live in `src/config.js` rather than being scattered as
+literals, so balancing is one file.
+
+## Physics
+
+A fixed timestep of **1/120 s**, with the accumulator pattern so behaviour does
+not vary with frame rate. Within a step, motion is subdivided so that no substep
+moves the ball more than **0.5 cell** — this is what prevents a fast ball from
+tunnelling through a one-cell wall.
+
+Collision resolves **one axis at a time**: apply the X displacement, test the
+cells the ball's AABB now overlaps, and if any are occupied, back the ball out to
+the boundary and negate `vx`; then repeat for Y. Resolving separately is what
+produces correct normals at corners, where a naive single test picks an arbitrary
+axis.
+
+Every cell the ball backs out of takes one point of damage.
+
+### Paddle
+
+Horizontal movement only, accelerating to a maximum speed, clamped to the
+playfield. Deflection uses the hit offset rather than a mirror reflection, which
+is what makes breakout feel like a game of skill:
+
+```
+offset = clamp((ballCenterX - paddleCenterX) / (paddleWidth / 2), -1, 1)
+angle  = offset * 60°
+v      = speed * (sin angle, -cos angle)
+```
+
+Speed is preserved through the bounce. Base speed ramps to **+25%** as the level
+is cleared, so the last few blocks are tense rather than tedious, then is
+multiplied by any active speed effect.
+
+## Explosions
+
+When a block reaches zero hp and its type has `explode: N`, every cell within
+Chebyshev distance `N` is destroyed too. Destroyed cells that themselves explode
+enqueue their own neighbourhoods. Processing is a queue with a visited set, so
+overlapping explosive blocks chain without looping. `solid` cells are immune.
+Every cell destroyed in a chain awards its points.
+
+Explosive blocks are the level author's pacing lever, and `chain` is what makes
+that lever controllable.
+
+A 64×64 silhouette holds well over a thousand cells — the shipped lungs are 1,758
+— so clearing one cell per hit is not viable. But sparse chaining explosives do
+not fix it either. Raising their density enough to matter (roughly one cell in
+eight) pushes the grid past a percolation threshold: each blast catches several
+more explosives, which catch more, so the level flips from twenty minutes to
+cleared-by-the-first-lucky-hit with almost no stable range between.
+
+The two roles are therefore separated:
+
+- **Bulk tissue** uses a small non-chaining blast — `{ explode: 1, chain: false }`
+  — so every hit reliably clears a 3×3 pocket. This is a predictable
+  cells-per-hit dial: a 1,758-cell level becomes roughly 200 hits. The ball
+  visibly tunnels through the mass, which was the appeal of the fine grid.
+- **Feature blocks** are sparse, chaining, and large-radius, for spectacle.
+  Because the bulk is non-chaining, a big blast cannot cascade across the level.
+
+A contributor tunes level length almost entirely with the bulk block's `explode`
+radius. `ADDING_A_LEVEL.md` documents this as the primary balancing tool, with
+the arithmetic: *hits ≈ filled cells ÷ (2·radius+1)²*.
+
+## Powerups
+
+A block destroyed by any means — ball, laser, or explosion — rolls its `powerup`
+chance. A hit spawns a falling 3×3 pickup at that cell, colour-coded by kind so
+the player can choose whether to catch it. It is caught when it overlaps the
+paddle's bounding box and despawns below the drain line.
+
+| Kind          | Effect                                                             |
+| ------------- | ------------------------------------------------------------------ |
+| `multiball`   | Instant. Each active ball splits into 3, spread ±25°, up to a hard cap of 9 balls in play. |
+| `widePaddle`  | Paddle scales to 1.5× for 15 s; the sprite stretches horizontally.  |
+| `slowBall`    | Ball speed ×0.7 for 12 s.                                          |
+| `fastBall`    | Ball speed ×1.4 for 12 s, and score counts double while active.     |
+| `sticky`      | 12 s. The ball is caught on contact; Space re-launches it at the deflection angle it would have taken. Lets the player aim into a carved tunnel. |
+| `laser`       | 12 s. Space fires upward, 0.3 s cooldown; a shot deals one point of damage to the first block it meets, then despawns. |
+
+Timers **refresh** rather than stack — catching a second `widePaddle` restarts
+its 15 s instead of granting 30. `slowBall` and `fastBall` are mutually
+exclusive; each cancels the other.
+
+Space is overloaded: it releases a stuck ball if one is held, otherwise it fires
+the laser if the laser is active, otherwise it serves.
+
+## Game state
+
+Lives start at 3. A life is lost only when the **last** ball drains, so multiball
+is a genuine safety net. On losing a life the paddle recentres, all active
+effects, drops, and shots clear, and the state returns to SERVE. **Block damage
+persists** across deaths — dying does not undo progress.
+
+```
+TITLE ──Space──▶ SERVE ──Space──▶ PLAYING
+                   ▲                 │
+                   │      last ball drains
+                   │                 ▼
+                   └──── LIFE_LOST ──┴──lives = 0──▶ GAME_OVER ──Space──▶ TITLE
+                                     │
+                         grid cleared│
+                                     ▼
+                              LEVEL_CLEAR ──▶ SERVE (next level)
+                                     └──no levels left──▶ WIN ──Space──▶ TITLE
+```
+
+LIFE_LOST and LEVEL_CLEAR hold for a short beat before continuing, so the
+transition is readable.
+
+The first level is loaded at construction so its art sits behind the TITLE
+screen, dimmed. Otherwise the title is a bare black rectangle and the game's only
+visual idea is hidden until the player commits to a run. Prompts are drawn on a
+solid strip in the clear space below the block grid — at three pixels per block
+the art is too busy to read text over unaided.
+
+Level `item` and `target` names are metadata for the registry and docs. They are
+not displayed in game — the HUD shows the level *number* only.
+
+## Input
+
+- **Keyboard:** Left/Right or A/D move; Space serves, releases, and fires; M mutes.
+- **Mouse:** the paddle centre follows the cursor's X position; click acts.
+- **Touch:** drag to move, tap to serve/release/fire.
+
+`input.js` translates all three into one intent object (`{ moveDir, pointerX,
+actionPressed, mutePressed }`) that `game.js` consumes, so the engine never knows
+which device produced an input.
+
+**Every keyboard action has a pointer equivalent**, which is what keeps the game
+whole on a phone: Space's three jobs (serve, release a stuck ball, fire the
+laser) are all reachable by tapping, and mute is a tappable HUD icon rather than
+only the M key.
+
+## Mobile
+
+Mobile is a target, not a fallback. The 64×100 playfield is already portrait, so
+no separate layout is needed — the work is in fitting and touch handling:
+
+- Device-pixel integer scaling, as described under Rendering.
+- `<meta name="viewport" content="width=device-width, initial-scale=1,
+  viewport-fit=cover, user-scalable=no">`, plus `touch-action: none` on the
+  canvas so dragging the paddle never scrolls or pinch-zooms the page.
+- The canvas is centred and letterboxed against the background colour, respecting
+  `env(safe-area-inset-*)` so nothing hides under a notch or home indicator.
+- Drag moves the paddle by *relative* finger movement rather than snapping the
+  paddle to the finger, so the player's thumb never covers the paddle it is
+  controlling.
+- Re-fit on `resize` and `orientationchange`.
+
+## High score
+
+A single high score, persisted in `localStorage` and displayed on the TITLE and
+GAME_OVER/WIN screens. Beaten mid-run, the HUD's score simply overtakes it; there
+is no announcement, consistent with the no-commentary tone.
+
+Keys are namespaced: **`lungs:highscore`** and **`lungs:muted`**. This is not
+cosmetic — GitHub Pages serves every project under one origin
+(`username.github.io`), so all of them share one `localStorage`. An unprefixed
+`highscore` key would collide with any other game hosted from the same account.
+
+`src/storage.js` wraps access and takes the storage object as a parameter, so it
+is unit-tested without a browser. All reads and writes are wrapped in try/catch:
+Safari private mode throws on `setItem`, and a thrown quota error must never take
+down the game loop. A corrupt or non-numeric stored value is treated as zero.
+
+Per-level bests are deliberately out of scope — one number, shown in two places.
+
+## Sound
+
+The engine emits named events; `src/audio.js` maps them to files in `assets/sfx/`
+and owns a mute toggle persisted at `lungs:muted`.
+
+**The sound files are supplied separately and are not part of this work.** The
+game must therefore be completely playable with `assets/sfx/` empty: a missing
+file resolves to a no-op sound, logged once at debug level, never thrown and
+never repeated per trigger. This is a hard requirement — a 404 on a sound must
+not produce console spam or a broken frame.
+
+The documented filenames:
+
+| File                  | Trigger                                  |
+| --------------------- | ---------------------------------------- |
+| `bounce-wall.wav`     | Ball hits a wall or ceiling              |
+| `bounce-paddle.wav`   | Ball hits the paddle                     |
+| `block-hit.wav`       | Block damaged but not destroyed          |
+| `block-break.wav`     | Block destroyed                          |
+| `explode.wav`         | An `explode` block detonates             |
+| `powerup-catch.wav`   | Pickup caught                            |
+| `laser.wav`           | Laser fired                              |
+| `life-lost.wav`       | Last ball drains                         |
+| `level-clear.wav`     | Grid cleared                             |
+| `game-over.wav`       | Lives exhausted                          |
+
+Two implementation details drive the design. Browsers block audio until a user
+gesture — the TITLE screen already requires a tap or Space to start, so that
+gesture unlocks playback and no separate "click to enable sound" prompt is
+needed. And a single `Audio` element will not retrigger while already playing,
+which matters when a chain explosion breaks forty blocks at once: each effect
+therefore keeps a small pool of pre-cloned elements, round-robined, with a
+per-effect retrigger cooldown of a few milliseconds so a mass break is one solid
+sound rather than forty stacked copies clipping.
+
+Sounds are global, not per-level. A level file cannot override them.
+
+## Testing
+
+Unit tests with `node --test`, covering the DOM-free modules:
+
+| File                    | Covers                                                          |
+| ----------------------- | --------------------------------------------------------------- |
+| `sprite.test.js`        | Trimming, palette mapping, empty and single-cell grids           |
+| `validate.test.js`      | Each rule rejects its violation; a known-good level passes       |
+| `grid.test.js`          | hp decrement, damage colour selection, clear detection ignoring `solid` |
+| `explode.test.js`       | Radius, chaining, `solid` immunity, no infinite loop on overlap  |
+| `collide.test.js`       | Per-axis resolution, corner normals, no tunnelling at max speed  |
+| `paddle.test.js`        | Offset→angle mapping, speed preservation, clamping at the edges  |
+| `effects.test.js`       | Refresh-not-stack, slow/fast exclusivity, expiry                 |
+| `powerups.test.js`      | Drop rolls, catch detection, despawn                             |
+| `scale.test.js`         | Integer factor from viewport and DPR; the 390pt/DPR 3 phone case; never scales past the viewport; never returns 0 |
+| `storage.test.js`       | Namespaced keys, corrupt values read as zero, a throwing `setItem` does not propagate |
+
+Rendering, audio, and input are verified by playing the game at
+http://localhost/lungs/, including at a phone viewport via device emulation.
+
+## Build order
+
+1. `sprite.js`, `validate.js`, and the level 1 data, with tests. The format lands
+   before the game does.
+2. Engine core: `grid`, `collide`, `ball`, `paddle` — playable with one-hit blocks.
+3. `explode.js`, hp and damage colours, powerups, effects, lasers.
+4. Render polish, HUD, state machine.
+5. Mobile fit (`scale.js`, viewport, touch drag), high score, audio layer.
+6. `README.md` and `docs/ADDING_A_LEVEL.md`, written against level 1 as the
+   worked example.
+7. Levels 2–4 — alcohol → liver, phone → brain, car → iceberg — added as
+   content-only changes. Building them without touching the engine is the proof
+   that the format holds.
+
+## Decisions taken, with reasons
+
+| Decision | Reason |
+| -------- | ------ |
+| No commentary or message framing | Chosen tone: straight arcade. The sprite pairing is the whole statement. |
+| 64×64 authored block grid | Matches the fine grid of the reference image. Per-block `explode` solves the resulting length problem without coarsening the art. |
+| Per-block `hp`, `explode`, `powerup` | Puts pacing in the level author's hands, so contributed levels can have their own rhythm without engine changes. |
+| Char grid over PNG | PR diffs stay reviewable. |
+| One module per level | A contribution is one new file plus one registry line. |
+| Validator at load | Makes reviewing an unfamiliar contributor's level a matter of looking at the art. |
+| DOM-free `engine/` | The interesting logic is testable without a browser or any test framework. |
+| No build step | GitHub Pages serves the repo directly; contributors need no toolchain. |
+| Integer scale computed in device pixels | The only way to fill a phone screen without giving up pixel-perfect rendering. |
+| `localStorage` keys namespaced `lungs:` | GitHub Pages puts every project of an account on one origin, so unprefixed keys collide across projects. |
+| Game runs silently with no sound files | The assets are supplied separately; the game must never depend on their presence. |
+| Sounds global, not per-level | Keeps the level format to art and behaviour. Revisit only if a contributor actually needs it. |
