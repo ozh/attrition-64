@@ -13,6 +13,22 @@ one line to the registry. No engine code changes.
 Then run `node --test 'test/*.test.js'`. The validator checks your level and
 names the exact field if anything is wrong.
 
+## See it before you play it
+
+Open **`tools/preview.html`** — for example
+`http://localhost/lungs/tools/preview.html` — and paste your level file into the
+textarea. It re-renders as you type and reports what you cannot see by looking:
+
+- whether it passes validation, and the exact error if not
+- filled cell count and **estimated hits to clear**, against the allowed range
+- the trimmed paddle size the engine will actually use
+- every block type with its colour, hit points, blast radius and drop chance
+- every paddle pixel character with its colour and how often it is used
+
+Your level does not need to be registered first, and it still renders when it
+fails validation — which is usually how you find out what is wrong. Work here
+while drawing, and only add the file to `src/levels/` once it looks right.
+
 ## The file
 
 ```js
