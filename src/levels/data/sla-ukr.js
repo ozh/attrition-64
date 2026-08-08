@@ -12,9 +12,9 @@ export default {
         r: { color: '#d62718', hp: 1, points: 10, explode: 1, chain: false },
 
         // hidden powerups
-        W: { color: '#ffffff', hp: 1, points: 20, explode: 1, chain: false, powerup: 0.65 },
-        B: { color: '#0036a7', hp: 1, points: 20, explode: 1, chain: false, powerup: 0.65 },
-        R: { color: '#d62718', hp: 1, points: 20, explode: 1, chain: false, powerup: { chance: 0.8, kind: 'piercing' } },
+        W: { color: '#ffffff', hp: 1, points: 20, explode: 1, chain: false, powerup: 0.15 },
+        B: { color: '#0036a7', hp: 1, points: 20, explode: 1, chain: false, powerup: 0.15 },
+        R: { color: '#d62718', hp: 1, points: 20, explode: 1, chain: false, powerup: { chance: 0.5, kind: 'piercing' } },
 
     },
 

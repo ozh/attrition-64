@@ -15,7 +15,7 @@ export default {
     '*': { color: '#ffd23f', hp: 1, points: 50, explode: 4 },
 
     // Powerups
-    p: { color: '#ff0fff', hp: 1, points: 20, explode: 1, chain: false, powerup: 0.85 },
+    p: { color: '#ff0fff', hp: 1, points: 20, explode: 1, chain: false, powerup: 0.65 },
   },
 
   grid: [
