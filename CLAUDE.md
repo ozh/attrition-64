@@ -35,14 +35,13 @@ Read these rather than duplicating them here — this file goes stale, they do n
   `src/storage.js` must stay DOM-free.** They are unit-tested under Node, which
   has no `window`, `document`, `localStorage` or `Audio`. Browser objects are
   injected as parameters.
-- **Level art is generated.** `tools/gen-lungs.mjs` and `tools/gen-shapes.mjs`
-  produce the 64-row grids; edit the generator and re-run rather than hand-editing
-  64 rows. `tools/gen-sfx.mjs` does the same for the sound effects and is seeded,
+- **Level art is generated.** `tools/gen-shapes.mjs <shape>` produces the 64-row
+  grids; edit the generator and re-run rather than hand-editing 64 rows. `tools/gen-sfx.mjs` does the same for the sound effects and is seeded,
   so regenerating produces byte-identical files.
 - **Level length is the usual bug.** A silhouette can hold 1,700 cells; without a
   blast radius on the bulk block that is an unplayable level. The validator
   rejects anything outside 80–600 estimated hits. See the spec's Explosions
   section for why `chain: false` on bulk blocks is load-bearing.
-- **Level 1 keeps its name.** `01-cigarette-lungs.js`, `tools/gen-lungs.mjs` and
-  the `cigaretteLungs` import are about the *level*, not the project, which was
-  called Lungs before it outgrew the name.
+- **A level has one name.** The file in `src/levels/data/` is named after its
+  title (`smoke-break.js`), and that filename is also its id. No ordering prefix,
+  no descriptive second name — order lives in `LEVEL_FILES` alone.

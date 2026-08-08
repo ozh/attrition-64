@@ -101,7 +101,7 @@ import { createFieldCache, drawField } from '../src/render/field.js';
 import { drawPaddle } from '../src/render/entities.js';
 import { drawHud } from '../src/render/hud.js';
 import { BASE_W, BASE_H, EMPTY_CHARS } from '../src/config.js';
-import sampleLevel from '../src/levels/01-cigarette-lungs.js';
+import sampleLevel from '../src/levels/data/smoke-break.js';
 
 const SCALE = 2;
 
@@ -355,7 +355,7 @@ const placeholder = toSource(sampleLevel);
 editor.value = placeholder;
 update();
 
-fetch('../src/levels/01-cigarette-lungs.js')
+fetch('../src/levels/data/smoke-break.js')
   .then((response) => (response.ok ? response.text() : null))
   .then((text) => {
     // Only replace if nothing has been typed or pasted in the meantime.

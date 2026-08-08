@@ -6,7 +6,7 @@ one line to the registry. No engine code changes.
 
 ## Two steps
 
-1. Create `src/levels/NN-item-target.js` (see the template below).
+1. Create `src/levels/data/<your-title>.js` (see the template below).
 2. Add its filename to the `LEVEL_FILES` array in `src/levels/index.js`.
 
 If you forget step 2 the test suite fails and tells you so — the registry is
@@ -79,10 +79,11 @@ Two names, doing different jobs:
   showing something being destroyed; the game does not also need to say so, and
   a title that comments (`BAD HABIT`, `THINK OF YOUR LUNGS`) breaks the tone the
   whole project is built around. Maximum 24 characters.
-- **The filename** is the plain statement of what your level depicts, because a
-  good `title` is deliberately oblique. **Name it `NN-item-target.js`** —
-  `05-chainsaw-tree.js` — so a reviewer knows what they are looking at before
-  reading 64 rows of ASCII. It becomes the level's id automatically.
+- **The filename** is the title, lower-cased and hyphenated: `WEEKEND JOBS`
+  lives in `weekend-jobs.js`. It becomes the level's id automatically. There is
+  no number in front of it — play order is the `LEVEL_FILES` array and nothing
+  else, so a filename can never claim a position that merging would falsify. If
+  you retitle a level, rename its file to match.
 
 Check both in `tools/preview.html`: the canvas draws the real HUD with sample
 score and lives, so you can see exactly how your title sits in the bar.
@@ -130,8 +131,8 @@ the shipped levels sit at 228, 131, 141 and 319.
 ## Drawing the target
 
 64 rows of exactly 64 characters. Any fixed-width editor works. The shipped art
-was generated mathematically instead — see `tools/gen-lungs.mjs` and
-`tools/gen-shapes.mjs` for ellipse-based silhouettes with a despeckle pass. Either
+was generated mathematically instead — see `tools/gen-shapes.mjs` for
+ellipse-based silhouettes with a despeckle pass. Either
 way, the committed level file holds plain characters, so a reviewer sees your
 shape directly in the pull request diff.
 

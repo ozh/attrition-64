@@ -1,15 +1,22 @@
 # ATTRITION 64
 
 A pixel breakout game where the paddle is an everyday item and the blocks form
-the silhouette of something that item is a threat to. A cigarette against a wall
-of lung-shaped blocks; a bottle against a liver; a phone against a brain; a car
-against an iceberg.
+the silhouette of something that item is a threat to.
+
+| Level | Paddle | Blocks |
+| --- | --- | --- |
+| `SMOKE BREAK` | cigarette | lungs |
+| `HAPPY HOUR` | beer bottle | liver |
+| `SCREEN TIME` | phone | brain |
+| `THE COMMUTE` | car | iceberg |
 
 The game makes no argument about any of it. There is no commentary and no
-message screen — the sprites are the whole idea.
+message screen — the sprites are the whole idea, and the level titles name the
+ordinary activity rather than its consequence.
 
-New pairings are welcome as pull requests. Adding one is a single new file plus
-one line in a registry: see [docs/ADDING_A_LEVEL.md](docs/ADDING_A_LEVEL.md).
+New pairings are welcome as pull requests. Adding one is a single new file in
+`src/levels/data/` plus one line in a registry: see
+[docs/ADDING_A_LEVEL.md](docs/ADDING_A_LEVEL.md).
 
 ## Playing
 
@@ -51,7 +58,7 @@ No dependencies and no test framework — Node's built-in runner, Node 18 or new
 node --test 'test/*.test.js'
 ```
 
-163 tests cover the engine, the level validator, the screen-fit calculation and
+168 tests cover the engine, the level validator, the screen-fit calculation and
 the storage wrapper. Rendering, audio and touch input are verified by playing the
 game; everything they depend on is pure and tested.
 
@@ -100,9 +107,11 @@ src/game.js           run lifecycle: states, lives, level progression
 src/simulation.js     one frame of play: balls, destruction, drops, shots
 src/engine/           DOM-free game logic, unit-tested
 src/render/           canvas drawing
-src/levels/           one module per level, plus the validator
+src/levels/           the registry and the validator
+src/levels/data/      one module per level, named after its title
 tools/preview.html    level previewer
-tools/gen-*.mjs       generators for the shipped art and sound effects
+tools/gen-shapes.mjs  regenerates the shipped level art
+tools/gen-sfx.mjs     regenerates the sound effects
 test/                 node --test suites
 docs/DESIGN.md        why the game is built the way it is
 docs/ADDING_A_LEVEL.md  the level format, in detail

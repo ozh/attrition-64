@@ -102,9 +102,17 @@ One ES module per level in `src/levels/`, default-exporting a plain object.
 Registered by adding its filename to the `LEVEL_FILES` array in
 `src/levels/index.js`.
 
-The filename is the level's identity: `01-cigarette-lungs.js` yields the id
-`cigarette-lungs`. Ids therefore cannot collide — the filesystem guarantees it —
-and no level carries an id field to keep in sync with its own name.
+The filename is the level's identity: `smoke-break.js` yields the id
+`smoke-break`. Ids therefore cannot collide — the filesystem guarantees it — and
+no level carries an id field to keep in sync with its own name.
+
+**A level has exactly one name.** The file is named after its title, so there is
+no second, descriptive vocabulary (`cigarette-lungs`) restating in clinical terms
+what the title already says. That was the last of three fields naming the same
+thing; `item`/`target` and `id` went the same way. There is no ordering prefix
+either: order is the `LEVEL_FILES` array alone, so a filename can never claim a
+position that a later merge would falsify — and a filename collision now means
+two levels genuinely share a title, which is worth surfacing.
 
 The list is kept by hand because it has to be. A browser has no directory API,
 and GitHub Pages returns 404 for a directory with no `index.html`. Local servers
@@ -119,7 +127,7 @@ which defeats the per-level validation below. Importing each file separately
 means a broken contribution is reported and skipped like any other bad level.
 
 ```js
-// src/levels/01-cigarette-lungs.js — the filename supplies the id
+// src/levels/data/smoke-break.js — the filename supplies the id
 export default {
   title: 'SMOKE BREAK',
   author: 'ozh',
@@ -245,7 +253,7 @@ src/render/entities.js           paddle, balls, drops, lasers
 src/render/hud.js                score/lives/level + a 3×5 bitmap font
 src/levels/index.js              registry — one line per level
 src/levels/validate.js           schema + balance checks
-src/levels/01-cigarette-lungs.js
+src/levels/data/smoke-break.js
 assets/sfx/                      empty; documented filenames, supplied separately
 test/*.test.js                   node --test, no dependencies
 docs/ADDING_A_LEVEL.md
@@ -376,9 +384,8 @@ the art is too busy to read text over unaided.
 number. Titles are plain everyday phrases — `SMOKE BREAK`, `HAPPY HOUR` — which
 name an ordinary activity and never its consequence, so the no-commentary rule
 holds: the banality of the phrase over a picture of something being destroyed is
-the whole effect. `item` and `target` were dropped, and so was `id`: the filename
-`01-cigarette-lungs.js` already records what a level depicts, and fields
-restating it could only drift out of sync with it.
+the whole effect. `item` and `target` were dropped, and so was `id`: the filename is the level's
+only name, and fields restating it could only drift out of sync with it.
 
 ## Input
 
