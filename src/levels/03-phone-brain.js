@@ -88,13 +88,16 @@ export default {
   ],
 
   paddle: {
-    colors: { b: '#2b2b33', s: '#7fd4ff' },
+    colors: { b: '#2b2b33', s: '#7fd4ff', o: '#050505' },
     grid: [
       'bbbbbbbbbbbb',
-      'bssssssssssb',
-      'bssssssssssb',
-      'bssssssssssb',
+      'bssssssssbbb',
+      'bssssssssbob',
+      'bssssssssbob',
+      'bssssssssbob',
+      'bssssssssbbb',
       'bbbbbbbbbbbb',
     ],
   },
 };
+
