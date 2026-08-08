@@ -1,4 +1,4 @@
-# Lungs — a pixel breakout where the paddle is the threat
+# ATTRITION 64 — a pixel breakout where the paddle is the threat
 
 **Date:** 2026-08-08
 **Status:** Approved design
@@ -52,14 +52,12 @@ design:
 - **It must be served over HTTP,** not opened from `file://`, because ES modules
   are subject to CORS.
 
-Locally this is already solved: the `dev-web` Docker container mounts
-`/home/ozh/dev` at `/var/www/html` and serves port 80, so the project is
-reachable at **http://localhost/lungs/** with no extra server. Verified by
-probe on 2026-08-08. Container shell access is
-`docker exec -it dev-web bash --login`, then `cd lungs`.
+Any static server satisfies this — `python3 -m http.server` is enough. The
+project is developed against a local static server and deployed to GitHub Pages
+unchanged.
 
-Tests run on the host with Node 24's built-in runner (`node --test`), which needs
-no dependencies and never touches the browser.
+Tests run with Node's built-in runner (`node --test`), which needs no
+dependencies and never touches the browser.
 
 ## Geometry
 
@@ -398,7 +396,7 @@ A single high score, persisted in `localStorage` and displayed on the TITLE and
 GAME_OVER/WIN screens. Beaten mid-run, the HUD's score simply overtakes it; there
 is no announcement, consistent with the no-commentary tone.
 
-Keys are namespaced: **`lungs:highscore`** and **`lungs:muted`**. This is not
+Keys are namespaced: **`attrition64:highscore`** and **`attrition64:muted`**. This is not
 cosmetic — GitHub Pages serves every project under one origin
 (`username.github.io`), so all of them share one `localStorage`. An unprefixed
 `highscore` key would collide with any other game hosted from the same account.
@@ -413,7 +411,7 @@ Per-level bests are deliberately out of scope — one number, shown in two place
 ## Sound
 
 The engine emits named events; `src/audio.js` maps them to files in `assets/sfx/`
-and owns a mute toggle persisted at `lungs:muted`.
+and owns a mute toggle persisted at `attrition64:muted`.
 
 **The sound files are supplied separately and are not part of this work.** The
 game must therefore be completely playable with `assets/sfx/` empty: a missing
@@ -465,7 +463,7 @@ Unit tests with `node --test`, covering the DOM-free modules:
 | `storage.test.js`       | Namespaced keys, corrupt values read as zero, a throwing `setItem` does not propagate |
 
 Rendering, audio, and input are verified by playing the game at
-http://localhost/lungs/, including at a phone viewport via device emulation.
+http://localhost:8000/, including at a phone viewport via device emulation.
 
 ## Build order
 
@@ -494,6 +492,6 @@ http://localhost/lungs/, including at a phone viewport via device emulation.
 | DOM-free `engine/` | The interesting logic is testable without a browser or any test framework. |
 | No build step | GitHub Pages serves the repo directly; contributors need no toolchain. |
 | Integer scale computed in device pixels | The only way to fill a phone screen without giving up pixel-perfect rendering. |
-| `localStorage` keys namespaced `lungs:` | GitHub Pages puts every project of an account on one origin, so unprefixed keys collide across projects. |
+| `localStorage` keys namespaced `attrition64:` | GitHub Pages puts every project of an account on one origin, so unprefixed keys collide across projects. |
 | Game runs silently with no sound files | The assets are supplied separately; the game must never depend on their presence. |
 | Sounds global, not per-level | Keeps the level format to art and behaviour. Revisit only if a contributor actually needs it. |

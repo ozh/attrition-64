@@ -15,9 +15,10 @@ names the exact field if anything is wrong.
 
 ## See it before you play it
 
-Open **`tools/preview.html`** — for example
-`http://localhost/lungs/tools/preview.html` — and paste your level file into the
-textarea. It re-renders as you type and reports what you cannot see by looking:
+Serve the project (`python3 -m http.server 8000` from the root) and open
+**`tools/preview.html`** — `http://localhost:8000/tools/preview.html`. Paste your
+level file into the textarea. It re-renders as you type and reports what you
+cannot see by looking:
 
 - whether it passes validation, and the exact error if not
 - filled cell count and **estimated hits to clear**, against the allowed range

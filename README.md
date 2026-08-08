@@ -1,4 +1,4 @@
-# Lungs
+# ATTRITION 64
 
 A pixel breakout game where the paddle is an everyday item and the blocks form
 the silhouette of something that item is a threat to. A cigarette against a wall
@@ -33,17 +33,15 @@ The game is static files loaded as ES modules, so it must be served over HTTP.
 Opening `index.html` from `file://` will not work — browsers block module loading
 over that scheme.
 
-Any static server will do:
+Any static server will do. From the project root:
 
 ```sh
 python3 -m http.server 8000     # then open http://localhost:8000/
 ```
 
-On this machine the `dev-web` container already serves the project directory, so
-it is reachable at **http://localhost/lungs/** with nothing to start.
-
-Every path in the project is relative, so the same files work unchanged when
-served from a subdirectory such as GitHub Pages' `/<repo>/`.
+Every path in the project is relative, so the same files work unchanged whether
+they are served from the root or from a subdirectory such as GitHub Pages'
+`/<repo>/`.
 
 ## Tests
 
@@ -78,9 +76,8 @@ stays silent, so you can delete any of them without breaking anything.
 
 ## Previewing a level
 
-```
-http://localhost/lungs/tools/preview.html
-```
+Open `tools/preview.html` through the same local server — for example
+`http://localhost:8000/tools/preview.html`.
 
 Paste a level file into the textarea and it renders as you type, then reports
 the things you cannot see by looking: validation status, filled cell count,

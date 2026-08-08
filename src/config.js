@@ -57,7 +57,7 @@ export const EMPTY_CHARS = '. ';
 export const DEFAULT_POINTS_PER_HP = 10;
 
 // Persistence
-export const STORAGE_PREFIX = 'lungs:';
+export const STORAGE_PREFIX = 'attrition64:';
 export const KEY_HIGHSCORE = 'highscore';
 export const KEY_MUTED = 'muted';
 

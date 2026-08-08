@@ -34,7 +34,7 @@ export function createAudio(storage, win = window) {
         effect.available = false;
         if (!effect.warned) {
           effect.warned = true;
-          win.console?.debug?.(`[lungs] no sound file for "${name}" — continuing silently`);
+          win.console?.debug?.(`[attrition64] no sound file for "${name}" — continuing silently`);
         }
       });
       effect.pool.push(element);

@@ -13,7 +13,7 @@ function fake(initial = {}) {
   };
 }
 
-test('keys are written under the lungs: prefix', () => {
+test('keys are written under the attrition64: prefix', () => {
   const backing = fake();
   createStorage(backing).setNumber(KEY_HIGHSCORE, 1234);
   assert.equal(backing.data[`${STORAGE_PREFIX}${KEY_HIGHSCORE}`], '1234');
