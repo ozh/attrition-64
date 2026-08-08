@@ -48,11 +48,22 @@ test('the title must fit the HUD', () => {
   rejects({ title: 'X'.repeat(MAX_TITLE_LENGTH + 1) }, 'title');
 });
 
+test('the error carries a detail without the level name, for the preview tool', () => {
+  assert.throws(() => validateLevel(makeLevel({ title: '' })), (err) => {
+    assert.match(err.message, /^Level "test-level" — title: /, 'the full message names the level');
+    assert.equal(err.detail, err.message.replace('Level "test-level" — ', ''));
+    assert.doesNotMatch(err.detail, /Level "/, 'the detail must not name any level');
+    assert.match(err.detail, /^title: /);
+    return true;
+  });
+});
+
 test('a level with no id is reported against a placeholder name', () => {
-  // There is no id to quote here, so the message cannot name the level.
-  assert.throws(() => validateLevel(makeLevel({ id: '' })), (err) => {
-    assert.equal(err.field, 'id');
-    assert.match(err.message, /<unnamed>/);
+  // Ids come from filenames, so a level pasted into the preview tool has none.
+  // It must still validate, and its errors must still be readable.
+  assert.throws(() => validateLevel(makeLevel({ id: undefined, title: '' })), (err) => {
+    assert.equal(err.field, 'title');
+    assert.match(err.message, /<pasted level>/);
     return true;
   });
 });

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { loadLevels } from '../src/levels/index.js';
+import { loadLevels, idFromFilename } from '../src/levels/index.js';
 import { validateLevel, estimateHitsToClear } from '../src/levels/validate.js';
 import lungs from '../src/levels/01-cigarette-lungs.js';
 
@@ -13,8 +13,8 @@ test('the lungs clear in a playable number of hits', () => {
   assert.ok(hits > 80 && hits < 600, `estimate was ${Math.round(hits)}`);
 });
 
-test('every registered level validates and is playable', () => {
-  const levels = loadLevels({ error: (m) => assert.fail(m) });
+test('every registered level validates and is playable', async () => {
+  const levels = await loadLevels({ error: (m) => assert.fail(m) });
   assert.ok(levels.length >= 4, `expected at least 4 levels, got ${levels.length}`);
 
   for (const level of levels) {
@@ -26,9 +26,21 @@ test('every registered level validates and is playable', () => {
   }
 });
 
-test('every level id is unique', () => {
-  const ids = loadLevels({ error: () => {} }).map((l) => l.id);
+test('ids come from filenames, so they cannot collide', async () => {
+  const ids = (await loadLevels({ error: () => {} })).map((l) => l.id);
   assert.equal(new Set(ids).size, ids.length);
+  assert.ok(ids.includes('cigarette-lungs'), `got ${ids.join(', ')}`);
+});
+
+test('the ordering prefix is stripped from the id', () => {
+  assert.equal(idFromFilename('01-cigarette-lungs.js'), 'cigarette-lungs');
+  assert.equal(idFromFilename('12_car-iceberg.js'), 'car-iceberg');
+  assert.equal(idFromFilename('chainsaw-tree.js'), 'chainsaw-tree');
+});
+
+test('a level file declaring its own id cannot override the filename', async () => {
+  const levels = await loadLevels({ error: () => {} });
+  for (const level of levels) assert.ok(level.id && !level.id.endsWith('.js'), level.id);
 });
 
 test('the paddle is a cigarette of legal size', () => {

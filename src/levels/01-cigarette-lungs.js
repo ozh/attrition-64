@@ -1,5 +1,4 @@
 export default {
-  id: 'cigarette-lungs',
   title: 'SMOKE BREAK',
   author: 'ozh',
   background: '#111000',

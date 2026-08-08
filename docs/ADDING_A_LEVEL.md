@@ -4,11 +4,14 @@ A level is one file. Pick an everyday item and something it threatens, draw the
 target as a 64×64 character grid and the item as a small paddle sprite, and add
 one line to the registry. No engine code changes.
 
-## Three steps
+## Two steps
 
 1. Create `src/levels/NN-item-target.js` (see the template below).
-2. Import it in `src/levels/index.js`.
-3. Add it to the `CANDIDATES` array in that same file.
+2. Add its filename to the `FILES` array in `src/levels/index.js`.
+
+The filename is the level's identity. `05-chainsaw-tree.js` becomes the id
+`chainsaw-tree` — the leading number is ordering only — so there is no id field
+to keep in sync, and two levels can never collide.
 
 Then run `node --test 'test/*.test.js'`. The validator checks your level and
 names the exact field if anything is wrong.
@@ -34,7 +37,6 @@ while drawing, and only add the file to `src/levels/` once it looks right.
 
 ```js
 export default {
-  id: 'chainsaw-tree',        // unique, kebab-case
   title: 'WEEKEND JOBS',      // shown in the HUD; see "Naming your level" below
   author: 'your-name',
   background: '#000000',
@@ -65,7 +67,7 @@ export default {
 
 ## Naming your level
 
-Two name fields, doing different jobs:
+Two names, doing different jobs:
 
 - **`title`** is what the player sees, centred in the HUD. Make it a **plain,
   everyday phrase** — `SMOKE BREAK`, `HAPPY HOUR`, `SCREEN TIME`, `THE COMMUTE`.
@@ -73,11 +75,10 @@ Two name fields, doing different jobs:
   showing something being destroyed; the game does not also need to say so, and
   a title that comments (`BAD HABIT`, `THINK OF YOUR LUNGS`) breaks the tone the
   whole project is built around. Maximum 24 characters.
-- **`id`** is a unique kebab-case slug, and it carries a second job: because a
-  good `title` is deliberately oblique, the id is the only plain statement of
-  what your level depicts. **Name it `item-target`** — `chainsaw-tree`,
-  `cigarette-lungs` — so a reviewer knows what they are looking at before they
-  read 64 rows of ASCII. Name the file to match.
+- **The filename** is the plain statement of what your level depicts, because a
+  good `title` is deliberately oblique. **Name it `NN-item-target.js`** —
+  `05-chainsaw-tree.js` — so a reviewer knows what they are looking at before
+  reading 64 rows of ASCII. It becomes the level's id automatically.
 
 Check both in `tools/preview.html`: the canvas draws the real HUD with sample
 score and lives, so you can see exactly how your title sits in the bar.

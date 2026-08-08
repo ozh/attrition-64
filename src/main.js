@@ -16,7 +16,7 @@ const fieldCache = createFieldCache(window);
 const storage = createStorage(window.localStorage);
 const audio = createAudio(storage, window);
 const input = createInput(canvas, window);
-const game = createGame({ levels: loadLevels(), storage, audio });
+const game = createGame({ levels: await loadLevels(), storage, audio });
 
 renderer.fit();
 window.addEventListener('resize', () => renderer.fit());

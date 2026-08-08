@@ -99,11 +99,20 @@ is a 1×1 cell AABB.
 ## Level file format
 
 One ES module per level in `src/levels/`, default-exporting a plain object.
-Registered by a single line in `src/levels/index.js`.
+Registered by adding its filename to the `FILES` array in `src/levels/index.js`.
+
+The filename is the level's identity: `01-cigarette-lungs.js` yields the id
+`cigarette-lungs`. Ids therefore cannot collide — the filesystem guarantees it —
+and no level carries an id field to keep in sync with its own name.
+
+Imports are dynamic for a reason beyond that. A **static** import of a level with
+a syntax error fails the whole module, taking every other level down with it,
+which defeats the per-level validation below. Importing each file separately
+means a broken contribution is reported and skipped like any other bad level.
 
 ```js
+// src/levels/01-cigarette-lungs.js — the filename supplies the id
 export default {
-  id: 'cigarette-lungs',
   title: 'SMOKE BREAK',
   author: 'ozh',
   background: '#000000',
@@ -359,9 +368,9 @@ the art is too busy to read text over unaided.
 number. Titles are plain everyday phrases — `SMOKE BREAK`, `HAPPY HOUR` — which
 name an ordinary activity and never its consequence, so the no-commentary rule
 holds: the banality of the phrase over a picture of something being destroyed is
-the whole effect. `item` and `target` were dropped: with only one player-facing
-name, the `id` slug (`cigarette-lungs`) is the record of what a level depicts,
-and a second pair of fields saying the same thing was redundant.
+the whole effect. `item` and `target` were dropped, and so was `id`: the filename
+`01-cigarette-lungs.js` already records what a level depicts, and fields
+restating it could only drift out of sync with it.
 
 ## Input
 

@@ -1,5 +1,4 @@
 export default {
-  id: 'car-iceberg',
   title: 'THE COMMUTE',
   author: 'ozh',
   background: '#000000',

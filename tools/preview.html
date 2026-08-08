@@ -76,10 +76,6 @@
   <section class="preview">
     <h2>Preview</h2>
     <canvas id="view"></canvas>
-    <p class="hint" style="margin:8px 0 0">
-      Score, high score and lives are sample values, shown so you can check the
-      title fits the bar.
-    </p>
   </section>
 
   <section class="analysis">
@@ -233,14 +229,13 @@ function report(level, error) {
   reportHost.innerHTML = `
     <table>
       <tr><td>title</td><td>${escape(level.title ?? '—')}</td></tr>
-      <tr><td>id</td><td>${escape(level.id ?? '—')}</td></tr>
       <tr><td>author</td><td>${escape(level.author ?? '—')}</td></tr>
       <tr><td>valid</td><td class="${error ? 'bad' : 'ok'}">${error ? 'FAILS VALIDATION' : 'passes'}</td></tr>
       <tr><td>filled</td><td>${filled} cells</td></tr>
       <tr><td>est. hits</td><td>${hitsCell}</td></tr>
       <tr><td>paddle</td><td>${paddleInfo}</td></tr>
     </table>
-    ${error ? `<h2>Validation error</h2><pre class="err">${escape(error.message)}</pre>` : ''}
+    ${error ? `<h2>Validation error</h2><pre class="err">${escape(error.detail ?? error.message)}</pre>` : ''}
     ${typeRows ? `<h2>Block types</h2><table>${typeRows}</table>` : ''}
     ${paddleRows ? `<h2>Paddle pixels</h2><table>${paddleRows}</table>` : ''}`;
 }
@@ -326,7 +321,6 @@ function toSource(level) {
     .join('\n');
 
   return `export default {
-  id: '${level.id}',
   title: '${level.title}',
   author: '${level.author ?? ''}',
   background: '${level.background}',

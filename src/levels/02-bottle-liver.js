@@ -1,5 +1,4 @@
 export default {
-  id: 'bottle-liver',
   title: 'HAPPY HOUR',
   author: 'ozh',
   background: '#000000',

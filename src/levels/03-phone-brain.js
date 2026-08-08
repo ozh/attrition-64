@@ -1,5 +1,4 @@
 export default {
-  id: 'phone-brain',
   title: 'SCREEN TIME',
   author: 'ozh',
   background: '#000000',

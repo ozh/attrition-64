@@ -11,6 +11,12 @@ export class LevelValidationError extends Error {
     this.name = 'LevelValidationError';
     this.levelId = levelId;
     this.field = field;
+    /**
+     * The same problem without the `Level "id" —` prefix, for callers that
+     * already know which level they are looking at. The preview tool shows one
+     * pasted level at a time, so naming it there is noise.
+     */
+    this.detail = `${field}: ${message}`;
   }
 }
 
@@ -52,10 +58,11 @@ export function estimateHitsToClear(level) {
 }
 
 export function validateLevel(level) {
-  const id = isText(level?.id) ? level.id : '<unnamed>';
+  // The loader derives the id from the filename; a level pasted into the
+  // preview tool has none, so fall back to something readable.
+  const id = isText(level?.id) ? level.id : '<pasted level>';
   const fail = (field, message) => { throw new LevelValidationError(id, field, message); };
 
-  if (!isText(level?.id)) fail('id', 'must be a non-empty string');
   if (!isText(level.title)) fail('title', 'must be a non-empty string — it is shown in the HUD');
   if (level.title.length > MAX_TITLE_LENGTH) {
     fail('title', `is ${level.title.length} characters; the HUD fits ${MAX_TITLE_LENGTH}`);

@@ -1,37 +1,49 @@
 import { validateLevel, LevelValidationError } from './validate.js';
-import cigaretteLungs from './01-cigarette-lungs.js';
-import bottleLiver from './02-bottle-liver.js';
-import phoneBrain from './03-phone-brain.js';
-import carIceberg from './04-car-iceberg.js';
 
-// Adding a level: import it above, then add it to this array. Nothing else.
-const CANDIDATES = [
-  cigaretteLungs,
-  bottleLiver,
-  phoneBrain,
-  carIceberg,
+// Adding a level: put the file in this directory and add its name here.
+// That is the whole registration step — the filename is the level's identity,
+// so there is no id to keep in sync inside the file.
+const FILES = [
+  '01-cigarette-lungs.js',
+  '02-bottle-liver.js',
+  '03-phone-brain.js',
+  '04-car-iceberg.js',
 ];
 
-/**
- * Validate every candidate independently. An invalid contribution is reported
- * and skipped rather than allowed to white-screen the game — one bad PR must
- * not break the levels either side of it.
- */
-export function loadLevels(log = console) {
-  const levels = [];
-  const seen = new Set();
+/** '01-cigarette-lungs.js' -> 'cigarette-lungs'. The leading number is ordering only. */
+export function idFromFilename(file) {
+  return file.replace(/\.js$/, '').replace(/^\d+[-_]/, '');
+}
 
-  for (const level of CANDIDATES) {
+/**
+ * Load and validate every level independently.
+ *
+ * Imports are dynamic rather than static so that one broken contribution is
+ * skipped instead of taking the whole game with it. A static import of a file
+ * with a syntax error fails the entire module — every other level included —
+ * which is exactly the failure the per-level validation was meant to prevent.
+ *
+ * Ids come from filenames, so they cannot collide: the filesystem already
+ * guarantees uniqueness.
+ */
+export async function loadLevels(log = console) {
+  const levels = [];
+
+  for (const file of FILES) {
+    const id = idFromFilename(file);
     try {
-      validateLevel(level);
-      if (seen.has(level.id)) {
-        throw new LevelValidationError(level.id, 'id', 'is already used by another level');
+      const module = await import(`./${file}`);
+      if (!module.default || typeof module.default !== 'object') {
+        throw new Error('the file has no default export, or it is not an object');
       }
-      seen.add(level.id);
+      // id last: the filename wins over anything the file might declare.
+      const level = { ...module.default, id };
+      validateLevel(level);
       levels.push(level);
     } catch (error) {
-      if (!(error instanceof LevelValidationError)) throw error;
-      log.error(error.message);
+      log.error(error instanceof LevelValidationError
+        ? error.message
+        : `Level "${id}" — could not be loaded: ${error.message}`);
     }
   }
   return levels;
