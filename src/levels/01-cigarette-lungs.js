@@ -1,7 +1,6 @@
 export default {
   id: 'cigarette-lungs',
-  item: 'Cigarette',
-  target: 'Lungs',
+  title: 'SMOKE BREAK',
   author: 'ozh',
   background: '#111000',
   ballColor: '#ffffff',

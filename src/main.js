@@ -51,7 +51,7 @@ function render() {
       score: game.score,
       high: game.high,
       lives: game.lives,
-      level: game.levelIndex + 1,
+      title: game.level.title,
       muted: audio.muted,
     });
   }

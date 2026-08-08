@@ -1,7 +1,6 @@
 export default {
   id: 'phone-brain',
-  item: 'Phone',
-  target: 'Brain',
+  title: 'SCREEN TIME',
   author: 'ozh',
   background: '#000000',
   ballColor: '#ffffff',

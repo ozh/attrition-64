@@ -76,6 +76,10 @@
   <section class="preview">
     <h2>Preview</h2>
     <canvas id="view"></canvas>
+    <p class="hint" style="margin:8px 0 0">
+      Score, high score and lives are sample values, shown so you can check the
+      title fits the bar.
+    </p>
   </section>
 
   <section class="analysis">
@@ -99,6 +103,7 @@ import { createGrid } from '../src/engine/grid.js';
 import { createPaddle, paddleBox } from '../src/engine/paddle.js';
 import { createFieldCache, drawField } from '../src/render/field.js';
 import { drawPaddle } from '../src/render/entities.js';
+import { drawHud } from '../src/render/hud.js';
 import { BASE_W, BASE_H, EMPTY_CHARS } from '../src/config.js';
 import sampleLevel from '../src/levels/01-cigarette-lungs.js';
 
@@ -146,11 +151,16 @@ function clearCanvas(background = '#000') {
   ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
 }
 
+// Deliberately near-worst-case widths: a six-digit score and high score squeeze
+// the centre hardest, so a title that fits here fits in any real game.
+const SAMPLE_HUD = { score: 123456, high: 999999, lives: 3, muted: false };
+
 function draw(level) {
   clearCanvas(level.background ?? '#000');
   cache.invalidate();
   drawField(renderer, cache, createGrid(level));
   drawPaddle(renderer, createPaddle(level));
+  drawHud(renderer, { ...SAMPLE_HUD, title: level.title });
 }
 
 /** Tally the non-empty characters of a character grid. Shared by both grids. */
@@ -222,8 +232,8 @@ function report(level, error) {
 
   reportHost.innerHTML = `
     <table>
+      <tr><td>title</td><td>${escape(level.title ?? '—')}</td></tr>
       <tr><td>id</td><td>${escape(level.id ?? '—')}</td></tr>
-      <tr><td>pairing</td><td>${escape(level.item ?? '?')} → ${escape(level.target ?? '?')}</td></tr>
       <tr><td>author</td><td>${escape(level.author ?? '—')}</td></tr>
       <tr><td>valid</td><td class="${error ? 'bad' : 'ok'}">${error ? 'FAILS VALIDATION' : 'passes'}</td></tr>
       <tr><td>filled</td><td>${filled} cells</td></tr>
@@ -303,8 +313,10 @@ editor.addEventListener('keydown', (event) => {
  * Render a level object back out as a level file.
  *
  * The sample is imported and re-serialised rather than fetched as text, so the
- * tool has no async dependency and works the moment it opens. The output is a
- * genuine, valid level file — only the original's comments are lost.
+ * tool shows something the instant it opens, with no async dependency. The
+ * output is a genuine, valid level file, but rebuilt from data — so the
+ * original's comments are not in it. That is why the real file text is fetched
+ * over the top as soon as it arrives.
  */
 function toSource(level) {
   const key = (ch) => (/^[A-Za-z_$][\w$]*$/.test(ch) ? ch : `'${ch}'`);
@@ -315,8 +327,7 @@ function toSource(level) {
 
   return `export default {
   id: '${level.id}',
-  item: '${level.item}',
-  target: '${level.target}',
+  title: '${level.title}',
   author: '${level.author ?? ''}',
   background: '${level.background}',
   ballColor: '${level.ballColor}',
@@ -341,8 +352,24 @@ ${rows(level.paddle.grid, '      ')}
 
 // Start from a real level, so the tool is useful before anything is pasted and
 // the expected shape of a file is obvious.
-editor.value = toSource(sampleLevel);
+//
+// Two steps on purpose. The serialised form paints immediately and never fails,
+// so there is no empty flash and no dependency on the network. The real file
+// text then replaces it, which matters because the shipped level's comments
+// explain the block types — the most useful thing a new contributor can read.
+const placeholder = toSource(sampleLevel);
+editor.value = placeholder;
 update();
+
+fetch('../src/levels/01-cigarette-lungs.js')
+  .then((response) => (response.ok ? response.text() : null))
+  .then((text) => {
+    // Only replace if nothing has been typed or pasted in the meantime.
+    if (!text || editor.value !== placeholder) return;
+    editor.value = text;
+    update();
+  })
+  .catch(() => { /* offline or file:// — the serialised placeholder stands in */ });
 </script>
 </body>
 </html>

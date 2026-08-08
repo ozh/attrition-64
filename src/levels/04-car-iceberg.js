@@ -1,7 +1,6 @@
 export default {
   id: 'car-iceberg',
-  item: 'Car',
-  target: 'Iceberg',
+  title: 'THE COMMUTE',
   author: 'ozh',
   background: '#000000',
   ballColor: '#ffffff',

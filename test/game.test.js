@@ -14,8 +14,7 @@ const memoryStorage = () => {
 const row = (ch) => ch.repeat(64);
 const testLevel = (overrides = {}) => ({
   id: 'unit',
-  item: 'I',
-  target: 'T',
+  title: 'UNIT',
   background: '#000000',
   ballColor: '#ffffff',
   types: { '#': { color: '#fff', hp: 1, points: 10 } },

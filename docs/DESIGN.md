@@ -104,8 +104,7 @@ Registered by a single line in `src/levels/index.js`.
 ```js
 export default {
   id: 'cigarette-lungs',
-  item: 'Cigarette',
-  target: 'Lungs',
+  title: 'SMOKE BREAK',
   author: 'ozh',
   background: '#000000',
   ballColor: '#ffffff',
@@ -356,8 +355,13 @@ visual idea is hidden until the player commits to a run. Prompts are drawn on a
 solid strip in the clear space below the block grid — at three pixels per block
 the art is too busy to read text over unaided.
 
-Level `item` and `target` names are metadata for the registry and docs. They are
-not displayed in game — the HUD shows the level *number* only.
+**Amended:** the HUD centre shows the level's `title` rather than a bare level
+number. Titles are plain everyday phrases — `SMOKE BREAK`, `HAPPY HOUR` — which
+name an ordinary activity and never its consequence, so the no-commentary rule
+holds: the banality of the phrase over a picture of something being destroyed is
+the whole effect. `item` and `target` were dropped: with only one player-facing
+name, the `id` slug (`cigarette-lungs`) is the record of what a level depicts,
+and a second pair of fields saying the same thing was redundant.
 
 ## Input
 

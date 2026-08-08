@@ -17,6 +17,9 @@ export class LevelValidationError extends Error {
 export const MIN_HITS = 80;
 export const MAX_HITS = 600;
 
+/** The HUD centre sits between the score and the high score; 24 chars clears both. */
+export const MAX_TITLE_LENGTH = 24;
+
 const HEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
 export const isValidColor = (v) => typeof v === 'string' && HEX.test(v);
 const isText = (v) => typeof v === 'string' && v.trim().length > 0;
@@ -53,8 +56,10 @@ export function validateLevel(level) {
   const fail = (field, message) => { throw new LevelValidationError(id, field, message); };
 
   if (!isText(level?.id)) fail('id', 'must be a non-empty string');
-  if (!isText(level.item)) fail('item', 'must be a non-empty string');
-  if (!isText(level.target)) fail('target', 'must be a non-empty string');
+  if (!isText(level.title)) fail('title', 'must be a non-empty string — it is shown in the HUD');
+  if (level.title.length > MAX_TITLE_LENGTH) {
+    fail('title', `is ${level.title.length} characters; the HUD fits ${MAX_TITLE_LENGTH}`);
+  }
   if (!isValidColor(level.background)) fail('background', `expected a hex color, got ${JSON.stringify(level.background)}`);
   if (!isValidColor(level.ballColor)) fail('ballColor', `expected a hex color, got ${JSON.stringify(level.ballColor)}`);
 

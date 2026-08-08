@@ -1,7 +1,6 @@
 export default {
   id: 'bottle-liver',
-  item: 'Beer bottle',
-  target: 'Liver',
+  title: 'HAPPY HOUR',
   author: 'ozh',
   background: '#000000',
   ballColor: '#ffe9b0',

@@ -54,10 +54,10 @@ export function drawTextCentered(renderer, text, y, color) {
   drawText(renderer, text, Math.round((BASE_W - textWidth(text)) / 2), y, color);
 }
 
-export function drawHud(renderer, { score, high, lives, level, muted }) {
+export function drawHud(renderer, { score, high, lives, title, muted }) {
   const y = 3;
   drawText(renderer, String(score).padStart(6, '0'), 3, y, '#ffffff');
-  drawTextCentered(renderer, `L${level}`, y, '#8899aa');
+  drawTextCentered(renderer, title ?? '', y, '#8899aa');
 
   // Lives as small squares in the top right, so no glyph is needed.
   let right = BASE_W - 3;

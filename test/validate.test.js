@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  validateLevel, LevelValidationError, isValidColor, estimateHitsToClear,
+  validateLevel, LevelValidationError, isValidColor, estimateHitsToClear, MAX_TITLE_LENGTH,
 } from '../src/levels/validate.js';
 
 const row = (ch) => ch.repeat(64);
@@ -9,8 +9,7 @@ const row = (ch) => ch.repeat(64);
 function makeLevel(overrides = {}) {
   return {
     id: 'test-level',
-    item: 'Item',
-    target: 'Target',
+    title: 'TEST LEVEL',
     background: '#000000',
     ballColor: '#ffffff',
     types: { '#': { color: '#f0f0f0', hp: 1, points: 10 } },
@@ -39,9 +38,14 @@ test('a well-formed level passes', () => {
   assert.doesNotThrow(() => validateLevel(makeLevel()));
 });
 
-test('identity fields are required', () => {
-  rejects({ item: '' }, 'item');
-  rejects({ target: '   ' }, 'target');
+test('the title is required', () => {
+  rejects({ title: '' }, 'title');
+  rejects({ title: '   ' }, 'title');
+});
+
+test('the title must fit the HUD', () => {
+  assert.doesNotThrow(() => validateLevel(makeLevel({ title: 'X'.repeat(MAX_TITLE_LENGTH) })));
+  rejects({ title: 'X'.repeat(MAX_TITLE_LENGTH + 1) }, 'title');
 });
 
 test('a level with no id is reported against a placeholder name', () => {

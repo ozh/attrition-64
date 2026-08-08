@@ -35,8 +35,7 @@ while drawing, and only add the file to `src/levels/` once it looks right.
 ```js
 export default {
   id: 'chainsaw-tree',        // unique, kebab-case
-  item: 'Chainsaw',
-  target: 'Tree',
+  title: 'WEEKEND JOBS',      // shown in the HUD; see "Naming your level" below
   author: 'your-name',
   background: '#000000',
   ballColor: '#ffffff',
@@ -63,6 +62,25 @@ export default {
   },
 };
 ```
+
+## Naming your level
+
+Two name fields, doing different jobs:
+
+- **`title`** is what the player sees, centred in the HUD. Make it a **plain,
+  everyday phrase** — `SMOKE BREAK`, `HAPPY HOUR`, `SCREEN TIME`, `THE COMMUTE`.
+  Name the ordinary activity, never the consequence. The picture is already
+  showing something being destroyed; the game does not also need to say so, and
+  a title that comments (`BAD HABIT`, `THINK OF YOUR LUNGS`) breaks the tone the
+  whole project is built around. Maximum 24 characters.
+- **`id`** is a unique kebab-case slug, and it carries a second job: because a
+  good `title` is deliberately oblique, the id is the only plain statement of
+  what your level depicts. **Name it `item-target`** — `chainsaw-tree`,
+  `cigarette-lungs` — so a reviewer knows what they are looking at before they
+  read 64 rows of ASCII. Name the file to match.
+
+Check both in `tools/preview.html`: the canvas draws the real HUD with sample
+score and lives, so you can see exactly how your title sits in the bar.
 
 ## Block types
 
@@ -130,8 +148,9 @@ Two rules the validator enforces:
 ## Out of scope for a level
 
 - **Sounds are global.** A level cannot ship or override its own audio.
-- **No text.** Levels display no words; `item` and `target` are metadata for the
-  registry and this documentation, and are never drawn on screen.
+- **`title` is the only text a level puts on screen**, and it belongs in the HUD,
+  not in the playfield. Nothing else you write is drawn: `id` and `author` are
+  metadata for the registry and this documentation.
 
 ## When the validator complains
 
