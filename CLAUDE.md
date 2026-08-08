@@ -38,6 +38,10 @@ Read these rather than duplicating them here — this file goes stale, they do n
 - **Level art is generated.** `tools/gen-shapes.mjs <shape>` produces the 64-row
   grids; edit the generator and re-run rather than hand-editing 64 rows. `tools/gen-sfx.mjs` does the same for the sound effects and is seeded,
   so regenerating produces byte-identical files.
+- **`og:image` and `og:url` in `index.html` are the only absolute URLs in the
+  project.** They have to be — social crawlers do not resolve relative paths —
+  so they carry a hardcoded host that has to match wherever the site is served.
+  Everything else must stay relative.
 - **Level length is the usual bug.** A silhouette can hold 1,700 cells; without a
   blast radius on the bulk block that is an unplayable level. The validator
   rejects anything outside 80–600 estimated hits. See the spec's Explosions

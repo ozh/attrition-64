@@ -98,10 +98,27 @@ how you work out what it is complaining about.
 
 It opens pre-filled with the shipped cigarette/lungs level as a worked example.
 
+## Icons and the share image
+
+The favicon, the home-screen icons and the 1200×630 image that Facebook and
+Twitter show when the link is shared are all derived from one square screenshot
+of level one:
+
+```sh
+python3 tools/gen-icons.py [source.jpg]
+```
+
+**One thing needs editing before the site goes live.** `og:image` and `og:url`
+in `index.html` must be *absolute* URLs — social crawlers will not resolve a
+relative path — so they carry a hardcoded host. Everything else in the project
+is relative. If the host or repository name is wrong there, the link simply
+shows no preview, with nothing to indicate why.
+
 ## Layout
 
 ```
-index.html            page shell
+index.html            page shell, favicon and share-preview metadata
+manifest.webmanifest  home-screen name, icons and colours
 src/config.js         every tunable constant
 src/game.js           run lifecycle: states, lives, level progression
 src/simulation.js     one frame of play: balls, destruction, drops, shots
@@ -112,6 +129,8 @@ src/levels/data/      one module per level, named after its title
 tools/preview.html    level previewer
 tools/gen-shapes.mjs  regenerates the shipped level art
 tools/gen-sfx.mjs     regenerates the sound effects
+tools/gen-icons.py    regenerates the favicons and the share image
+assets/icons/         favicon, home-screen icons, og-image.png
 test/                 node --test suites
 docs/DESIGN.md        why the game is built the way it is
 docs/ADDING_A_LEVEL.md  the level format, in detail
