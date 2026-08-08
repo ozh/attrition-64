@@ -1,7 +1,7 @@
 import { createRenderer } from './render/canvas.js';
 import { createFieldCache, drawField } from './render/field.js';
 import {
-  drawPaddle, drawBalls, drawDrops, drawShots, drawFlashes, drawShield,
+  drawPaddle, drawBalls, drawDrops, drawShots, drawFlashes, drawShield, DROP_COLORS,
 } from './render/entities.js';
 import { drawHud } from './render/hud.js';
 import { drawScreens } from './render/screens.js';
@@ -46,7 +46,10 @@ function render() {
   if (game.grid) {
     drawField(renderer, fieldCache, game.grid);
     drawPaddle(renderer, game.paddle);
-    drawBalls(renderer, game.balls, game.level.ballColor);
+    // Tinted while piercing: the state has a short, trip-based window, so it
+    // needs to be visible at a glance rather than counted.
+    drawBalls(renderer, game.balls,
+      game.piercing ? DROP_COLORS.piercing : game.level.ballColor);
     drawDrops(renderer, game.drops);
     drawShots(renderer, game.shots);
     drawFlashes(renderer, game.flashes);

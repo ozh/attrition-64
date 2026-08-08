@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 import { createGame, NEUTRAL_INTENT } from '../src/game.js';
 import { createStorage } from '../src/storage.js';
 import { isCleared } from '../src/engine/grid.js';
+import { paddleBox } from '../src/engine/paddle.js';
 import {
   LIVES, DRAIN_ROW, LIFE_LOST_HOLD, STEP, ENDGAME_RELIEF, POWERUP_KINDS,
-  RELIEF_FLASH_SECONDS, CEILING, FIELD_W, SHIELD_ROW, GRID_TOP, EFFECT_DURATION,
+  RELIEF_FLASH_SECONDS, CEILING, FIELD_W, SHIELD_ROW, GRID_TOP,
 } from '../src/config.js';
 
 const silentAudio = { play() {}, toggleMute() { return false; }, get muted() { return false; } };
@@ -385,13 +386,92 @@ test('without piercing the same ball bounces', () => {
   assert.ok(g.balls[0].vy > 0, 'reflected downward');
 });
 
-test('piercing wears off', () => {
+/** Send the ball down onto the paddle from just above it. */
+function bounceOffPaddle(g, steps = 5) {
+  const ball = g.balls[0];
+  const box = paddleBox(g.paddle);
+  ball.stuck = false;
+  ball.x = box.x + 2;
+  ball.y = box.y - 1.2;
+  ball.vx = 0;
+  ball.vy = Math.abs(ball.vy);
+  for (let t = 0; t < steps; t++) g.update(STEP, NEUTRAL_INTENT);
+}
+
+/** One substep of upward travel, which is what arms the effect. */
+function rise(g) {
+  const ball = g.balls[0];
+  ball.stuck = false;
+  ball.x = 30;
+  ball.y = 70;
+  ball.vx = 0;
+  ball.vy = -Math.abs(ball.vy);
+  g.update(STEP, NEUTRAL_INTENT);
+}
+
+test('piercing ends when the ball comes back to the paddle', () => {
   const g = playing();
   applyEffectForTest(g, 'piercing');
-  run(g, EFFECT_DURATION.piercing + 0.5);
+  assert.equal(g.piercing, true);
 
-  aimIntoBlocks(g);
-  assert.ok(g.balls[0].vy > 0, 'bouncing again once the effect expires');
+  rise(g);
+  assert.equal(g.piercing, true, 'still piercing on the way up');
+
+  bounceOffPaddle(g);
+  assert.equal(g.piercing, false, 'one round trip, then done');
+});
+
+test('catching it on the way down still buys a full round trip', () => {
+  const g = playing();
+  applyEffectForTest(g, 'piercing');
+
+  // Straight onto the paddle without ever climbing: this contact must not
+  // count, or the pickup would be worth nothing at all.
+  bounceOffPaddle(g);
+  assert.equal(g.piercing, true, 'the arming rule protects a descending catch');
+
+  rise(g);
+  bounceOffPaddle(g);
+  assert.equal(g.piercing, false, 'the trip after that one does end it');
+});
+
+test('a shield save also ends the trip', () => {
+  const g = playing();
+  applyEffectForTest(g, 'piercing');
+  g.shield = true;
+  rise(g);
+
+  dropBall(g);
+  assert.equal(g.state, 'playing', 'the shield saved it');
+  assert.equal(g.piercing, false, 'a turn-around at the bottom is a turn-around');
+});
+
+test('being caught by a sticky paddle ends the trip too', () => {
+  const g = playing();
+  applyEffectForTest(g, 'sticky');
+  applyEffectForTest(g, 'piercing');
+  rise(g);
+
+  bounceOffPaddle(g);
+  assert.ok(g.balls[0].stuck, 'the sticky paddle caught it');
+  assert.equal(g.piercing, false);
+});
+
+test('piercing is not a timed effect', () => {
+  const g = playing();
+  applyEffectForTest(g, 'piercing');
+  rise(g);
+  run(g, 20);            // far longer than any effect duration
+  assert.equal(g.piercing, true, 'only the paddle ends it, never the clock');
+});
+
+test('losing a life clears piercing', () => {
+  const g = playing();
+  applyEffectForTest(g, 'piercing');
+  rise(g);
+  dropBall(g);
+  for (let t = 0; t < LIFE_LOST_HOLD / STEP + 2; t++) g.update(STEP, NEUTRAL_INTENT);
+  assert.equal(g.piercing, false);
 });
 
 test('a piercing ball still bounces off indestructible blocks', () => {

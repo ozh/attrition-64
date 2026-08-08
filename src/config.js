@@ -44,14 +44,16 @@ export const POWERUP_KINDS = [
   'multiball', 'widePaddle', 'slowBall', 'fastBall', 'sticky', 'laser', 'piercing', 'shield',
 ];
 // Kinds that fire once instead of running on a timer, so they carry no duration.
-export const INSTANT_POWERUPS = ['multiball', 'shield'];
+export const INSTANT_POWERUPS = ['multiball', 'shield', 'piercing'];
 export const DROP_SPEED = 20;          // cells per second
 export const DROP_SIZE = 1;
-export const EFFECT_DURATION = {
-  widePaddle: 15, slowBall: 12, fastBall: 12, sticky: 12, laser: 12,
-  // Short: a ball that ignores blocks clears ground very fast.
-  piercing: 7,
-};
+export const EFFECT_DURATION = { widePaddle: 15, slowBall: 12, fastBall: 12, sticky: 12, laser: 12 };
+
+// Piercing lasts one round trip — up, and back down to the paddle — rather than
+// a number of seconds. A timer would be worth wildly different amounts at
+// different ball speeds, and it could expire while the ball sits *inside* the
+// block mass, where the collision resolver would snap it somewhere arbitrary.
+// Ending on paddle contact always ends it in open space.
 export const WIDE_PADDLE_SCALE = 1.5;
 export const SLOW_BALL_MUL = 0.7;
 export const FAST_BALL_MUL = 1.4;

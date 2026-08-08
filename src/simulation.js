@@ -78,7 +78,7 @@ export function createSimulation({
    * author never planned for.
    */
   function ballWorld() {
-    const piercing = hasEffect(game.effects, 'piercing');
+    const piercing = game.piercing;
     return {
       isBlocked: piercing
         ? (cx, cy) => specAt(game.grid, cx, cy)?.solid === true
@@ -103,8 +103,13 @@ export function createSimulation({
         if (!saveWithShield(ball)) continue;
       }
 
+      // Piercing is armed once the ball has actually climbed, so catching it on
+      // the way down does not end it on the paddle contact half a second later.
+      if (game.piercing && !ball.stuck && ball.vy < 0) game.piercingArmed = true;
+
       if (ballHitsPaddle(ball, game.paddle)) {
         ball.y = paddleBox(game.paddle).y - C.BALL_SIZE;
+        endPiercing();
         if (hasEffect(game.effects, 'sticky')) {
           ball.stuck = true;
           ball.stickOffset = ball.x - game.paddle.x;
@@ -124,9 +129,18 @@ export function createSimulation({
    * Spend the shield to bounce a ball that would otherwise be lost.
    * @returns true when the ball survives.
    */
+  /** One round trip: any turn-around at the bottom ends it, paddle or shield. */
+  function endPiercing() {
+    if (game.piercing && game.piercingArmed) {
+      game.piercing = false;
+      game.piercingArmed = false;
+    }
+  }
+
   function saveWithShield(ball) {
     if (!game.shield) return false;
     game.shield = false;
+    endPiercing();
     ball.y = C.SHIELD_ROW - C.BALL_SIZE;
     const away = ball.x < C.FIELD_W / 2 ? 1 : -1;
     setBallAngle(ball, away * C.SHIELD_BOUNCE_ANGLE, targetSpeed());
@@ -175,6 +189,11 @@ export function createSimulation({
     }
     if (kind === 'shield') {
       game.shield = true;      // held, not stacked: one save at a time
+      return;
+    }
+    if (kind === 'piercing') {
+      game.piercing = true;
+      game.piercingArmed = false;
       return;
     }
     applyEffect(game.effects, kind);

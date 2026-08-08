@@ -31,6 +31,8 @@ export function createGame({ levels, storage, audio, random = Math.random }) {
     relief: createRelief(),
     flashes: [],
     shield: false,
+    piercing: false,
+    piercingArmed: false,
     hold: 0,
     initialBlocks: 1,
     laserCooldown: 0,
@@ -74,6 +76,8 @@ export function createGame({ levels, storage, audio, random = Math.random }) {
     game.flashes = [];
     game.relief = createRelief();
     game.shield = false;
+    game.piercing = false;
+    game.piercingArmed = false;
     game.laserCooldown = 0;
 
     const box = paddleBox(game.paddle);
