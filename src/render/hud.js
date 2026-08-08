@@ -71,6 +71,8 @@ export function drawHud(renderer, { score, high, lives, level, muted }) {
     drawText(renderer, 'M', right, y, '#667788');
   }
 
-  const highText = `HI${high}`;
+  // The space matters: at 3x5 the digit 0 and the letter O are the same glyph,
+  // so "HI0" reads as "HIO". Matches the title screen, which already spaces it.
+  const highText = `HI ${high}`;
   drawText(renderer, highText, right - textWidth(highText) - 4, y, '#8899aa');
 }

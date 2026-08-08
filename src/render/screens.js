@@ -20,11 +20,11 @@ export function drawScreens(renderer, game) {
     ctx.fillRect(0, top, BASE_W, height);
   };
 
-  const prompt = (top) => {
-    panel(top - 3, 22);
-    drawTextCentered(renderer, 'PRESS SPACE OR TAP', top, '#ffffff');
-    drawTextCentered(renderer, `HI ${game.high}`, top + 9, '#8899aa');
-  };
+  // Title and serve share this line, so pressing space does not make the prompt
+  // jump — only the bar behind it shrinks. Below the block grid, above the
+  // paddle, so the level art stays visible.
+  const PROMPT_Y = 288;
+  const promptLine = (color) => drawTextCentered(renderer, 'PRESS SPACE OR TAP', PROMPT_Y, color);
 
   const result = (word) => {
     dim(0.65);
@@ -37,12 +37,13 @@ export function drawScreens(renderer, game) {
   switch (game.state) {
     case 'title':
       dim(0.5);
-      // Below the block grid, above the paddle, so the art stays visible.
-      prompt(288);
+      panel(PROMPT_Y - 3, 22);
+      promptLine('#ffffff');
+      drawTextCentered(renderer, `HIGH SCORE ${game.high}`, PROMPT_Y + 9, '#8899aa');
       break;
     case 'serve':
-      panel(BASE_H - 27, 11);
-      drawTextCentered(renderer, 'PRESS SPACE OR TAP', BASE_H - 24, '#66788a');
+      panel(PROMPT_Y - 3, 11);
+      promptLine('#66788a');
       break;
     case 'gameOver':
       result('GAME OVER');

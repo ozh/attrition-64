@@ -22,10 +22,24 @@ renderer.fit();
 window.addEventListener('resize', () => renderer.fit());
 window.addEventListener('orientationchange', () => renderer.fit());
 
+// Hide the pointer only while the paddle is under the player's control. The
+// hold states are included so the cursor does not blink back for a second
+// between losing a life and serving again.
+const CURSOR_HIDDEN_STATES = new Set(['serve', 'playing', 'lifeLost', 'levelClear']);
+let cursorHidden = null;
+
+function updateCursor() {
+  const hide = CURSOR_HIDDEN_STATES.has(game.state);
+  if (hide === cursorHidden) return;      // avoid touching the DOM every frame
+  cursorHidden = hide;
+  canvas.classList.toggle('hide-cursor', hide);
+}
+
 let accumulator = 0;
 let previous = performance.now();
 
 function render() {
+  updateCursor();
   renderer.clear(game.level?.background ?? '#000000');
   if (game.grid) {
     drawField(renderer, fieldCache, game.grid);

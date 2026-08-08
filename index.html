@@ -26,6 +26,10 @@
     image-rendering: crisp-edges;
     touch-action: none;      /* dragging the paddle must never scroll the page */
   }
+  /* Applied by main.js only while a ball is in play — see CURSOR_HIDDEN_STATES.
+     The paddle is the pointer then; on the title and result screens you are
+     reading text, so the cursor comes back. */
+  canvas.hide-cursor { cursor: none; }
 </style>
 </head>
 <body>
