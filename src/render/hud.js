@@ -1,8 +1,37 @@
 import { BASE_W } from '../config.js';
 
-// 3x5 bitmap font. Each glyph is five rows of three bits, MSB leftmost.
-// At this size some letters are unavoidable compromises; legibility at 1x is
-// what matters, not typographic beauty.
+/**
+ * 3x5 bitmap font.
+ *
+ * A glyph is five numbers, one per row, top to bottom. Each number is 0-7 —
+ * three bits, one per column — and the bits read left to right from the most
+ * significant, because the draw loop below tests `1 << (GLYPH_W - 1 - col)`.
+ * So the number *is* the row of pixels, written in binary:
+ *
+ *     0 = 000 = · · ·        4 = 100 = # · ·
+ *     1 = 001 = · · #        5 = 101 = # · #
+ *     2 = 010 = · # ·        6 = 110 = # # ·
+ *     3 = 011 = · # #        7 = 111 = # # #
+ *
+ * To read a glyph, write its five numbers as three binary digits and stack
+ * them. To add one, draw it on a 3x5 grid and read each row back as binary:
+ *
+ *     A: [7,5,7,5,5]      1: [2,6,2,2,7]      ?: [7,1,2,0,2]
+ *        7 -> # # #          2 -> · # ·          7 -> # # #
+ *        5 -> # · #          6 -> # # ·          1 -> · · #
+ *        7 -> # # #          2 -> · # ·          2 -> · # ·
+ *        5 -> # · #          2 -> · # ·          0 -> · · ·
+ *        5 -> # · #          7 -> # # #          2 -> · # ·
+ *
+ * Exactly five entries, every value 0-7 — both are pinned by tests, because a
+ * sixth row or an 8 would draw wrong rather than throw.
+ *
+ * At this size some glyphs are unavoidable compromises; legibility at 1x is
+ * what matters, not typographic beauty. Note that `0` and `O` are necessarily
+ * identical: there is no room to distinguish them, since a centre-dotted zero
+ * would be [7,5,7,5,7], which is already `8`. Anywhere a digit could be read
+ * as a letter, space it — the HUD writes `HI 0`, not `HI0`.
+ */
 const FONT = {
   0: [7, 5, 5, 5, 7], 1: [2, 6, 2, 2, 7], 2: [7, 1, 7, 4, 7], 3: [7, 1, 7, 1, 7],
   4: [5, 5, 7, 1, 1], 5: [7, 4, 7, 1, 7], 6: [7, 4, 7, 5, 7], 7: [7, 1, 1, 1, 1],
@@ -15,6 +44,12 @@ const FONT = {
   U: [5, 5, 5, 5, 7], V: [5, 5, 5, 5, 2], W: [5, 5, 7, 7, 5], X: [5, 5, 2, 5, 5],
   Y: [5, 5, 2, 2, 2], Z: [7, 1, 2, 4, 7],
   ' ': [0, 0, 0, 0, 0], '-': [0, 0, 7, 0, 0], ':': [0, 2, 0, 2, 0], '.': [0, 0, 0, 0, 2],
+  '!': [2, 2, 2, 0, 2], '?': [7, 1, 2, 0, 2], ',': [0, 0, 0, 2, 4],
+  '"': [5, 5, 0, 0, 0], "'": [2, 2, 0, 0, 0],
+  // '@' is the one glyph 3x5 cannot really hold: a ring, an inner mark and a
+  // tail need more width. This is a closed ring dropping into a tail that
+  // swings right — the silhouette reads as @ in context, not in isolation.
+  '@': [7, 5, 7, 4, 3],
 };
 const UNKNOWN = [7, 5, 5, 5, 7];
 

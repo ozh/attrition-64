@@ -99,9 +99,9 @@ import { validateLevel, estimateHitsToClear, MIN_HITS, MAX_HITS } from '../src/l
 import { createGrid } from '../src/engine/grid.js';
 import { createPaddle, paddleBox } from '../src/engine/paddle.js';
 import { createFieldCache, drawField } from '../src/render/field.js';
-import { drawPaddle } from '../src/render/entities.js';
+import { drawPaddle, drawBalls } from '../src/render/entities.js';
 import { drawHud } from '../src/render/hud.js';
-import { BASE_W, BASE_H, EMPTY_CHARS } from '../src/config.js';
+import { BASE_W, BASE_H, EMPTY_CHARS, FIELD_W, BALL_SIZE } from '../src/config.js';
 import sampleLevel from '../src/levels/data/smoke-break.js';
 
 const SCALE = 2;
@@ -152,11 +152,22 @@ function clearCanvas(background = '#000') {
 // the centre hardest, so a title that fits here fits in any real game.
 const SAMPLE_HUD = { score: 123456, high: 999999, lives: 3, muted: false };
 
+// Clear of the paddle and clear of the art, so `ballColor` is visible against
+// the background rather than lost against either.
+const BALL_HEIGHT_ABOVE_PADDLE = 8;
+
 function draw(level) {
   clearCanvas(level.background ?? '#000');
   cache.invalidate();
   drawField(renderer, cache, createGrid(level));
-  drawPaddle(renderer, createPaddle(level));
+
+  const paddle = createPaddle(level);
+  drawPaddle(renderer, paddle);
+  drawBalls(renderer, [{
+    x: FIELD_W / 2 - BALL_SIZE / 2,
+    y: paddleBox(paddle).y - BALL_HEIGHT_ABOVE_PADDLE,
+  }], level.ballColor ?? '#ffffff');
+
   drawHud(renderer, { ...SAMPLE_HUD, title: level.title });
 }
 
