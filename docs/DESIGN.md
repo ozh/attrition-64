@@ -343,6 +343,14 @@ paddle's bounding box and despawns below the drain line.
 | `fastBall`    | Ball speed ×1.4 for 12 s, and score counts double while active.     |
 | `sticky`      | 12 s. The ball is caught on contact; Space re-launches it at the deflection angle it would have taken. Lets the player aim into a carved tunnel. |
 | `laser`       | 12 s. Space fires upward, 0.3 s cooldown; a shot deals one point of damage to the first block it meets, then despawns. |
+| `piercing`    | 7 s. The ball stops bouncing off destructible blocks and ploughs through, damaging everything it crosses. Indestructible blocks still turn it back, or a level built with walls would leak balls into places its author never planned for. Short, because it clears ground very fast. |
+| `shield`      | Held, not timed. A one-shot floor at row 99 that bounces a single draining ball and is then spent. Drawn across the playfield while held, so it needs no HUD legend: it is a thing in the world, shown where it acts. |
+
+`piercing` needs a hook in the ball: while it is active nothing destructible
+reports as solid, so the ball never reflects — and it would therefore sail
+through the grid doing nothing. `stepBall` takes an optional `onOverlap`
+callback that fires for every cell the ball's box covers after moving, which is
+what turns passing through into damage.
 
 Timers **refresh** rather than stack — catching a second `widePaddle` restarts
 its 15 s instead of granting 30. `slowBall` and `fastBall` are mutually

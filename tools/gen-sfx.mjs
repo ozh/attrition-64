@@ -1,4 +1,4 @@
-// Generates the ten sound effects into assets/sfx/ as 16-bit mono WAV files.
+// Generates the sound effects into assets/sfx/ as 16-bit mono WAV files.
 //
 //   node tools/gen-sfx.mjs
 //
@@ -114,6 +114,13 @@ const EFFECTS = {
   },
 
   'level-clear': () => arpeggio([523, 659, 784, 1047], 0.5, triangle),
+
+  // Rising, unlike every other cue here: a save is the one moment the game
+  // gives something back.
+  'shield-save': () => {
+    const sweep = sweeper(320, 960, 0.18, 0.6);
+    return render(0.18, (t, p) => triangle(sweep(t)) * decay(p, 1.5) * 0.4);
+  },
 
   'game-over': () => {
     const sweep = sweeper(240, 60, 0.8, 1.2);

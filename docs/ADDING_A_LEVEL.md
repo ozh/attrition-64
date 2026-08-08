@@ -100,7 +100,7 @@ Each character in `grid` maps to one entry in `types`.
 | `damage` | Optional array of colours, one per hit point, **`damage[0]` at full health** and `damage[hp-1]` one hit from breaking. Length must equal `hp`. Overrides `color` for drawing. |
 | `explode` | On destruction, also destroys every cell within this square radius. |
 | `chain` | Whether this block's explosion sets off other explosive blocks. Default `true`. |
-| `powerup` | Drop chance. A number is shorthand for `{ chance: n }` with a random kind. Also `{ chance, kind }` or `{ chance, kinds: [...] }`. Kinds: `multiball`, `widePaddle`, `slowBall`, `fastBall`, `sticky`, `laser`. |
+| `powerup` | Drop chance. A number is shorthand for `{ chance: n }` with a random kind. Also `{ chance, kind }` or `{ chance, kinds: [...] }`. Kinds: `multiball`, `widePaddle`, `slowBall`, `fastBall`, `sticky`, `laser`, `piercing`, `shield`. |
 | `solid` | Indestructible. Bounces the ball, never breaks, excluded from the clear condition. |
 
 The level is cleared when no destructible blocks remain.

@@ -40,10 +40,18 @@ export const LIFE_LOST_HOLD = 1.0;     // seconds
 export const LEVEL_CLEAR_HOLD = 1.5;
 
 // Powerups
-export const POWERUP_KINDS = ['multiball', 'widePaddle', 'slowBall', 'fastBall', 'sticky', 'laser'];
+export const POWERUP_KINDS = [
+  'multiball', 'widePaddle', 'slowBall', 'fastBall', 'sticky', 'laser', 'piercing', 'shield',
+];
+// Kinds that fire once instead of running on a timer, so they carry no duration.
+export const INSTANT_POWERUPS = ['multiball', 'shield'];
 export const DROP_SPEED = 20;          // cells per second
 export const DROP_SIZE = 1;
-export const EFFECT_DURATION = { widePaddle: 15, slowBall: 12, fastBall: 12, sticky: 12, laser: 12 };
+export const EFFECT_DURATION = {
+  widePaddle: 15, slowBall: 12, fastBall: 12, sticky: 12, laser: 12,
+  // Short: a ball that ignores blocks clears ground very fast.
+  piercing: 7,
+};
 export const WIDE_PADDLE_SCALE = 1.5;
 export const SLOW_BALL_MUL = 0.7;
 export const FAST_BALL_MUL = 1.4;
@@ -51,6 +59,31 @@ export const FAST_BALL_SCORE_MUL = 2;
 export const MULTIBALL_SPREAD = 25 * Math.PI / 180;
 export const LASER_SPEED = 80;
 export const LASER_COOLDOWN = 0.3;
+
+// The shield is a one-shot floor: it saves a single draining ball and is spent.
+// Held rather than timed, so it is worth catching early and keeping.
+// One row above the drain. DRAIN_ROW - 2 would land exactly on PADDLE_BOTTOM.
+export const SHIELD_ROW = DRAIN_ROW - 1;
+export const SHIELD_BOUNCE_ANGLE = Math.PI / 5;
+
+// Endgame relief.
+//
+// The last blocks of a level are isolated stragglers, and clearing them is
+// mostly waiting for the ball to travel. Below each threshold — a fraction of
+// the level's starting block count — a powerup drops from the top of the
+// playfield on the matching cadence, and the cadence tightens as the grid
+// empties. Guaranteed rather than rolled: a coin flip on a 25-second timer can
+// leave a minute of nothing, which is the tedium this exists to end.
+//
+// Ordered loosest first; the tightest matching tier wins.
+export const ENDGAME_RELIEF = [
+  { remaining: 0.04, everySeconds: 25 },
+  { remaining: 0.02, everySeconds: 15 },
+  { remaining: 0.01, everySeconds: 8 },
+];
+// A drop appearing from nowhere reads as a bug, so the spawn point flashes.
+export const RELIEF_FLASH_SECONDS = 0.4;
+export const RELIEF_FLASH_WIDTH = 4;     // cells
 
 // Level authoring
 export const EMPTY_CHARS = '. ';
@@ -65,7 +98,7 @@ export const KEY_MUTED = 'muted';
 export const SFX_PATH = 'assets/sfx/';
 export const SFX_NAMES = [
   'bounce-wall', 'bounce-paddle', 'block-hit', 'block-break', 'explode',
-  'powerup-catch', 'laser', 'life-lost', 'level-clear', 'game-over',
+  'powerup-catch', 'laser', 'life-lost', 'level-clear', 'game-over', 'shield-save',
 ];
 export const SFX_POOL_SIZE = 4;
 export const SFX_RETRIGGER_MS = 12;    // collapses a mass break into one sound

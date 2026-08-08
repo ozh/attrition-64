@@ -96,3 +96,27 @@ test('a stuck ball does not move', () => {
   stepBall(b, 0.1, world());
   assert.equal(b.y, 50);
 });
+
+
+test('onOverlap reports every cell the ball covers, bounce or not', () => {
+  // What a piercing ball needs: isBlocked says nothing is solid, so the ball
+  // never reflects, but the cells it crosses must still be reported.
+  const seen = [];
+  const b = createBall(30.5, 20.5, 40, 0);
+  stepBall(b, 0.05, {
+    isBlocked: () => false,
+    onHitCell: () => assert.fail('nothing was solid, so nothing should have been hit'),
+    onWall: () => {},
+    onOverlap: (cx, cy) => seen.push(`${cx},${cy}`),
+  });
+  assert.ok(b.y < 20.5, 'the ball kept going');
+  assert.ok(seen.includes('30,20'), `expected to cross 30,20 — saw ${[...new Set(seen)].join(' ')}`);
+  assert.ok(seen.includes('30,19'), 'and the cell above it');
+});
+
+test('onOverlap is optional and costs nothing when absent', () => {
+  const b = createBall(30, 50, 40, 0);
+  assert.doesNotThrow(() => stepBall(b, 0.1, {
+    isBlocked: () => false, onHitCell: () => {}, onWall: () => {},
+  }));
+});

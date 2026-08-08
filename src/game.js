@@ -3,6 +3,7 @@ import { createBall, setBallAngle } from './engine/ball.js';
 import { createPaddle, paddleBox, movePaddle, setPaddleCenter, setPaddleScale } from './engine/paddle.js';
 import { createEffects, tickEffects, hasEffect, clearEffects } from './engine/effects.js';
 import { createSimulation } from './simulation.js';
+import { createRelief } from './engine/relief.js';
 import * as C from './config.js';
 
 export const NEUTRAL_INTENT = {
@@ -13,7 +14,7 @@ export const NEUTRAL_INTENT = {
  * The run: states, lives, level progression, scoring totals.
  * Per-frame world stepping lives in simulation.js.
  */
-export function createGame({ levels, storage, audio }) {
+export function createGame({ levels, storage, audio, random = Math.random }) {
   const game = {
     state: levels.length ? 'title' : 'error',
     score: 0,
@@ -27,6 +28,9 @@ export function createGame({ levels, storage, audio }) {
     drops: [],
     shots: [],
     effects: createEffects(),
+    relief: createRelief(),
+    flashes: [],
+    shield: false,
     hold: 0,
     initialBlocks: 1,
     laserCooldown: 0,
@@ -49,7 +53,8 @@ export function createGame({ levels, storage, audio }) {
   const scoreMultiplier = () => (hasEffect(game.effects, 'fastBall') ? C.FAST_BALL_SCORE_MUL : 1);
 
   const sim = createSimulation({
-    game, audio, targetSpeed, scoreMultiplier, onAllBallsLost: loseLife,
+    game, audio, targetSpeed, scoreMultiplier, clearedFraction, random,
+    onAllBallsLost: loseLife,
   });
 
   function loadLevel(index) {
@@ -66,6 +71,9 @@ export function createGame({ levels, storage, audio }) {
     setPaddleCenter(game.paddle, C.FIELD_W / 2);
     game.drops = [];
     game.shots = [];
+    game.flashes = [];
+    game.relief = createRelief();
+    game.shield = false;
     game.laserCooldown = 0;
 
     const box = paddleBox(game.paddle);

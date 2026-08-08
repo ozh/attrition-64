@@ -30,9 +30,14 @@ Three lives. A life is lost only when the *last* ball drains, so multiball is a
 real safety net. Damage to the blocks persists when you die — dying never undoes
 progress.
 
-Blocks drop six kinds of pickup, colour-coded so you can decline one: multiball,
-wide paddle, slow ball, fast ball (which also doubles your score while active),
-sticky paddle, and lasers.
+Blocks drop eight kinds of pickup, colour-coded so you can see what is coming:
+multiball, wide paddle, slow ball, fast ball (which also doubles your score
+while active), sticky paddle, lasers, a piercing ball that ploughs straight
+through blocks instead of bouncing, and a shield — a one-shot floor that saves a
+single ball, drawn across the bottom of the playfield while you hold it.
+
+Once a level is nearly clear the last blocks are scattered and slow to find, so
+the game starts dropping powerups on a timer that tightens as the grid empties.
 
 ## Running it
 
@@ -75,7 +80,7 @@ recordings over the top — the game only cares about the filenames:
 
 ```
 bounce-wall  bounce-paddle  block-hit  block-break  explode
-powerup-catch  laser  life-lost  level-clear  game-over
+powerup-catch  laser  shield-save  life-lost  level-clear  game-over
 ```
 
 A missing file is not an error. It is logged once at debug level and that effect

@@ -1,6 +1,8 @@
 import { createRenderer } from './render/canvas.js';
 import { createFieldCache, drawField } from './render/field.js';
-import { drawPaddle, drawBalls, drawDrops, drawShots } from './render/entities.js';
+import {
+  drawPaddle, drawBalls, drawDrops, drawShots, drawFlashes, drawShield,
+} from './render/entities.js';
 import { drawHud } from './render/hud.js';
 import { drawScreens } from './render/screens.js';
 import { createInput } from './input.js';
@@ -47,6 +49,8 @@ function render() {
     drawBalls(renderer, game.balls, game.level.ballColor);
     drawDrops(renderer, game.drops);
     drawShots(renderer, game.shots);
+    drawFlashes(renderer, game.flashes);
+    drawShield(renderer, game.shield);
     drawHud(renderer, {
       score: game.score,
       high: game.high,

@@ -1,10 +1,11 @@
-import { blocksAt, damageAt } from './engine/grid.js';
+import { blocksAt, damageAt, specAt } from './engine/grid.js';
 import { detonate } from './engine/explode.js';
 import { createBall, stepBall, ballSpeed, setBallAngle } from './engine/ball.js';
 import { paddleBox, setPaddleScale, ballHitsPaddle, deflect } from './engine/paddle.js';
 import { applyEffect, hasEffect } from './engine/effects.js';
 import { rollPowerup, createDrop, stepDrops } from './engine/powerups.js';
 import { createShot, stepShots } from './engine/lasers.js';
+import { tickRelief } from './engine/relief.js';
 import * as C from './config.js';
 
 /**
@@ -14,13 +15,37 @@ import * as C from './config.js';
  * level progression and scoring totals. Everything this module needs from that
  * side arrives as an explicit dependency rather than a shared closure.
  */
-export function createSimulation({ game, audio, targetSpeed, scoreMultiplier, onAllBallsLost }) {
+export function createSimulation({
+  game, audio, targetSpeed, scoreMultiplier, onAllBallsLost, clearedFraction,
+  random = Math.random,
+}) {
   function step(dt, intent) {
     game.laserCooldown = Math.max(0, game.laserCooldown - dt);
     if (intent.action) handleAction();
     stepBalls(dt);
     stepPowerups(dt);
     stepLasers(dt);
+    stepRelief(dt);
+    stepFlashes(dt);
+  }
+
+  /**
+   * Once the grid is nearly clear the remaining blocks are isolated and the
+   * hunt is mostly travel time, so the game starts handing out powerups. See
+   * ENDGAME_RELIEF for the thresholds and why the drops are guaranteed.
+   */
+  function stepRelief(dt) {
+    if (!tickRelief(game.relief, dt, 1 - clearedFraction())) return;
+
+    const kind = C.POWERUP_KINDS[Math.floor(random() * C.POWERUP_KINDS.length)];
+    const x = random() * (C.FIELD_W - C.DROP_SIZE);
+    game.drops.push(createDrop(kind, x, C.CEILING));
+    game.flashes.push({ x, kind, remaining: C.RELIEF_FLASH_SECONDS });
+  }
+
+  function stepFlashes(dt) {
+    for (const flash of game.flashes) flash.remaining -= dt;
+    game.flashes = game.flashes.filter((flash) => flash.remaining > 0);
   }
 
   /** Space is overloaded: release a held ball first, otherwise fire. */
@@ -46,13 +71,27 @@ export function createSimulation({ game, audio, targetSpeed, scoreMultiplier, on
     }
   }
 
-  function stepBalls(dt) {
-    const speed = targetSpeed();
-    const world = {
-      isBlocked: (cx, cy) => blocksAt(game.grid, cx, cy),
+  /**
+   * While piercing, only indestructible blocks stop the ball — everything else
+   * is passed through and damaged on the way, via onOverlap. Solid blocks keep
+   * bouncing it, or a level built with walls would leak balls into places its
+   * author never planned for.
+   */
+  function ballWorld() {
+    const piercing = hasEffect(game.effects, 'piercing');
+    return {
+      isBlocked: piercing
+        ? (cx, cy) => specAt(game.grid, cx, cy)?.solid === true
+        : (cx, cy) => blocksAt(game.grid, cx, cy),
       onHitCell: hitCell,
+      onOverlap: piercing ? hitCell : undefined,
       onWall: () => audio.play('bounce-wall'),
     };
+  }
+
+  function stepBalls(dt) {
+    const speed = targetSpeed();
+    const world = ballWorld();
 
     const survivors = [];
     for (const ball of game.balls) {
@@ -60,7 +99,9 @@ export function createSimulation({ game, audio, targetSpeed, scoreMultiplier, on
       // effects apply without accumulating floating-point drift.
       if (!ball.stuck) setBallAngle(ball, Math.atan2(ball.vx, -ball.vy), speed);
       const { drained } = stepBall(ball, dt, world);
-      if (drained) continue;
+      if (drained) {
+        if (!saveWithShield(ball)) continue;
+      }
 
       if (ballHitsPaddle(ball, game.paddle)) {
         ball.y = paddleBox(game.paddle).y - C.BALL_SIZE;
@@ -77,6 +118,20 @@ export function createSimulation({ game, audio, targetSpeed, scoreMultiplier, on
     game.balls = survivors;
 
     if (game.balls.length === 0) onAllBallsLost();
+  }
+
+  /**
+   * Spend the shield to bounce a ball that would otherwise be lost.
+   * @returns true when the ball survives.
+   */
+  function saveWithShield(ball) {
+    if (!game.shield) return false;
+    game.shield = false;
+    ball.y = C.SHIELD_ROW - C.BALL_SIZE;
+    const away = ball.x < C.FIELD_W / 2 ? 1 : -1;
+    setBallAngle(ball, away * C.SHIELD_BOUNCE_ANGLE, targetSpeed());
+    audio.play('shield-save');
+    return true;
   }
 
   function hitCell(cx, cy) {
@@ -116,6 +171,10 @@ export function createSimulation({ game, audio, targetSpeed, scoreMultiplier, on
   function grantPowerup(kind) {
     if (kind === 'multiball') {
       splitBalls();
+      return;
+    }
+    if (kind === 'shield') {
+      game.shield = true;      // held, not stacked: one save at a time
       return;
     }
     applyEffect(game.effects, kind);

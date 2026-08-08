@@ -20,9 +20,22 @@ test('the paddle bottom leaves room for the tallest legal paddle', () => {
   assert.ok(C.PADDLE_BOTTOM < C.DRAIN_ROW);
 });
 
-test('every powerup kind has a duration except the instant one', () => {
+test('every powerup kind either runs on a timer or fires instantly', () => {
   for (const kind of C.POWERUP_KINDS) {
-    if (kind === 'multiball') continue;
-    assert.equal(typeof C.EFFECT_DURATION[kind], 'number', `${kind} needs a duration`);
+    const instant = C.INSTANT_POWERUPS.includes(kind);
+    const timed = typeof C.EFFECT_DURATION[kind] === 'number';
+    assert.ok(instant !== timed,
+      `${kind} must be exactly one of instant or timed (instant=${instant}, timed=${timed})`);
   }
+});
+
+test('the instant list names only real powerups', () => {
+  for (const kind of C.INSTANT_POWERUPS) {
+    assert.ok(C.POWERUP_KINDS.includes(kind), `${kind} is not a powerup`);
+  }
+});
+
+test('the shield bar sits above the drain but below the paddle', () => {
+  assert.ok(C.SHIELD_ROW < C.DRAIN_ROW, 'a shield below the drain would never catch anything');
+  assert.ok(C.SHIELD_ROW > C.PADDLE_BOTTOM, 'a shield above the paddle would catch balls it should not');
 });

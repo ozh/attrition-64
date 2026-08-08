@@ -1,6 +1,9 @@
 import { charAt } from '../engine/sprite.js';
 import { paddleBox } from '../engine/paddle.js';
-import { CELL, BLOCK_PX, BALL_SIZE, DROP_SIZE } from '../config.js';
+import {
+  CELL, BLOCK_PX, BALL_SIZE, DROP_SIZE, CEILING, FIELD_W, SHIELD_ROW,
+  RELIEF_FLASH_SECONDS, RELIEF_FLASH_WIDTH,
+} from '../config.js';
 
 const DROP_COLORS = {
   multiball: '#ffd23f',
@@ -9,6 +12,10 @@ const DROP_COLORS = {
   fastBall: '#ff6b4a',
   sticky: '#c86bff',
   laser: '#ff4a7d',
+  // Green and pale cyan are the two hues left unclaimed; at 3x3 pixels the
+  // only thing telling drops apart is colour, so the gaps matter.
+  piercing: '#8bff3d',
+  shield: '#b9f2ff',
 };
 
 /**
@@ -60,6 +67,40 @@ export function drawShots(renderer, shots) {
   ctx.fillStyle = DROP_COLORS.laser;
   for (const shot of shots) {
     ctx.fillRect(Math.round(shot.x * CELL) + 1, Math.round(shot.y * CELL), 1, CELL * 2);
+  }
+}
+
+/**
+ * A bar at the spawn point of an endgame powerup, fading out.
+ *
+ * Without it a drop materialises from nowhere and reads as a bug the first time
+ * a player sees it. Coloured to match the powerup, so the flash also says what
+ * is on its way.
+ */
+export function drawFlashes(renderer, flashes) {
+  const { ctx } = renderer;
+  for (const flash of flashes) {
+    ctx.globalAlpha = Math.max(0, Math.min(1, flash.remaining / RELIEF_FLASH_SECONDS));
+    ctx.fillStyle = DROP_COLORS[flash.kind] ?? '#ffffff';
+    const left = Math.round((flash.x + DROP_SIZE / 2 - RELIEF_FLASH_WIDTH / 2) * CELL);
+    // At the spawn row, not the very top: that band is the HUD.
+    ctx.fillRect(left, CEILING * CELL, RELIEF_FLASH_WIDTH * CELL, 2);
+  }
+  ctx.globalAlpha = 1;
+}
+
+/**
+ * The held shield, drawn as a floor across the playfield.
+ *
+ * On the field rather than in the HUD deliberately: it is a thing in the world
+ * that the ball will bounce off, and showing it where it acts needs no legend.
+ */
+export function drawShield(renderer, active) {
+  if (!active) return;
+  const { ctx } = renderer;
+  ctx.fillStyle = DROP_COLORS.shield;
+  for (let x = 0; x < FIELD_W; x += 2) {
+    ctx.fillRect(x * CELL, SHIELD_ROW * CELL, CELL, 2);
   }
 }
 

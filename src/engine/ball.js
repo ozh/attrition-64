@@ -1,4 +1,4 @@
-import { moveAxis } from './collide.js';
+import { moveAxis, overlappedCells } from './collide.js';
 import { BALL_SIZE, MAX_SUBSTEP_DIST, FIELD_W, CEILING, DRAIN_ROW } from '../config.js';
 
 /** @param angle radians off straight up, positive to the right */
@@ -16,6 +16,11 @@ export function setBallAngle(ball, angle, speed = ballSpeed(ball)) {
 /**
  * Advance the ball, subdividing so no substep travels more than half a cell.
  * That cap is the whole reason a fast ball cannot pass through a thin wall.
+ *
+ * `world.onHitCell` fires for cells the ball bounces off. `world.onOverlap` is
+ * optional and fires for every cell the ball's box covers after moving —
+ * that is what a piercing ball needs, since it reports nothing through
+ * `isBlocked` and so would otherwise sail through the grid doing nothing.
  */
 export function stepBall(ball, dt, world) {
   if (ball.stuck) return { drained: false };
@@ -48,6 +53,12 @@ function substep(ball, dt, world) {
   if (ry.blocked) {
     ball.vy = -ball.vy;
     for (const [cx, cy] of ry.cells) world.onHitCell(cx, cy);
+  }
+
+  if (world.onOverlap) {
+    for (const [cx, cy] of overlappedCells(ball.x, ball.y, BALL_SIZE, BALL_SIZE)) {
+      world.onOverlap(cx, cy);
+    }
   }
 
   bounceWalls(ball, world);
