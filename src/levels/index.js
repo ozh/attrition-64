@@ -21,6 +21,9 @@ export const LEVEL_FILES = [
   'happy-hour.js',
   'screen-time.js',
   'the-commute.js',
+  'take-away.js',
+  'no-mistake.js',
+  'sla-ukr.js',
 ];
 
 export const LEVEL_DIR = 'data';

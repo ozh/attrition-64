@@ -8,7 +8,9 @@ the silhouette of something that item is a threat to.
 | `SMOKE BREAK` | cigarette | lungs |
 | `HAPPY HOUR` | beer bottle | liver |
 | `SCREEN TIME` | phone | brain |
-| `THE COMMUTE` | car | iceberg |
+| `THE COMMUTE` | car | the Earth |
+| `TAKEAWAY` | burger | intestines |
+| `MAKE NO MISTAKE` | Claude Code | ocean and fish |
 
 The game makes no argument about any of it. There is no commentary and no
 message screen — the sprites are the whole idea, and the level titles name the
