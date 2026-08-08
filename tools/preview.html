@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lungs — level preview</title>
+<style>
+  :root { color-scheme: dark; }
+  body {
+    margin: 0 auto; padding: 20px; max-width: 1740px;
+    background: #0e0e12; color: #d8d8e0;
+    font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  h1 { font-size: 15px; margin: 0 0 4px; color: #fff; font-weight: 600; }
+  h2 { font-size: 12px; margin: 24px 0 8px; color: #8a8aa0; text-transform: uppercase; letter-spacing: .08em; }
+  section > h2:first-child { margin-top: 0; }
+  p.hint { margin: 0 0 18px; color: #8a8aa0; }
+
+  /* One column by default; two, then three, as width allows.
+     The canvas is a fixed 514px (512 backing + border), so the breakpoints are
+     set by what fits beside it. */
+  .layout {
+    display: grid; gap: 24px; align-items: start;
+    grid-template-areas: "editor" "preview" "analysis";
+  }
+  @media (min-width: 900px) {
+    .layout {
+      grid-template-columns: minmax(300px, 660px) 514px;
+      grid-template-areas: "editor preview" "editor analysis";
+    }
+  }
+  @media (min-width: 1320px) {
+    .layout {
+      grid-template-columns: minmax(300px, 660px) 514px minmax(300px, 460px);
+      grid-template-areas: "editor preview analysis";
+    }
+  }
+  .editor { grid-area: editor; min-width: 0; }
+  .preview { grid-area: preview; min-width: 0; }
+  .analysis { grid-area: analysis; min-width: 0; }
+
+  textarea {
+    width: 100%; height: 320px; box-sizing: border-box; resize: vertical;
+    /* ~85 characters. `ch` resolves against the textarea's own font, so this
+       holds whatever monospace face the browser picks. */
+    max-width: 88ch;
+    background: #16161c; color: #d8d8e0; border: 1px solid #2a2a34; border-radius: 4px;
+    padding: 10px; font: 10px/1.15 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    tab-size: 2; white-space: pre; overflow-wrap: normal; overflow-x: auto;
+  }
+  /* Match the canvas height once they sit side by side. */
+  @media (min-width: 900px) { textarea { height: 802px; } }
+  textarea:focus { outline: none; border-color: #4a7fba; }
+  canvas { image-rendering: pixelated; background: #000; border: 1px solid #2a2a34; display: block; max-width: 100%; }
+  table { border-collapse: collapse; width: 100%; }
+  td { padding: 3px 8px 3px 0; vertical-align: top; }
+  td:first-child { color: #8a8aa0; white-space: nowrap; width: 1%; }
+  .ok { color: #6ede8a; }
+  .bad { color: #ff6b6b; }
+  .warn { color: #ffd23f; }
+  .swatch { display: inline-block; width: 9px; height: 9px; margin-right: 6px; vertical-align: -1px; border: 1px solid #00000060; }
+  pre.err { white-space: pre-wrap; color: #ff9a9a; background: #2a1414; padding: 8px; border-radius: 4px; margin: 0; }
+</style>
+</head>
+<body>
+
+<h1>Level preview</h1>
+<p class="hint">Paste a level file. It re-renders as you type.</p>
+
+<div class="layout">
+  <section class="editor">
+    <h2>Level file</h2>
+    <textarea id="source" spellcheck="false" aria-label="Level file source"></textarea>
+  </section>
+
+  <section class="preview">
+    <h2>Preview</h2>
+    <canvas id="view"></canvas>
+  </section>
+
+  <section class="analysis">
+    <h2>Analysis</h2>
+    <div id="report"></div>
+  </section>
+</div>
+
+<script>
+// A silently blank tool is useless feedback — surface whatever went wrong.
+function showFatal(text) {
+  const host = document.getElementById('report');
+  if (host) host.innerHTML = `<pre class="err">${String(text)}</pre>`;
+}
+window.addEventListener('error', (e) => showFatal(`${e.message}\n${e.filename}:${e.lineno}`));
+window.addEventListener('unhandledrejection', (e) => showFatal(e.reason?.stack ?? e.reason));
+</script>
+<script type="module">
+import { validateLevel, estimateHitsToClear, MIN_HITS, MAX_HITS } from '../src/levels/validate.js';
+import { createGrid } from '../src/engine/grid.js';
+import { createPaddle, paddleBox } from '../src/engine/paddle.js';
+import { createFieldCache, drawField } from '../src/render/field.js';
+import { drawPaddle } from '../src/render/entities.js';
+import { BASE_W, BASE_H, EMPTY_CHARS } from '../src/config.js';
+import sampleLevel from '../src/levels/01-cigarette-lungs.js';
+
+const SCALE = 2;
+
+const editor = document.getElementById('source');
+const reportHost = document.getElementById('report');
+const canvas = document.getElementById('view');
+canvas.width = BASE_W * SCALE;
+canvas.height = BASE_H * SCALE;
+
+const ctx = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+const renderer = { ctx };
+const cache = createFieldCache(window);
+
+const escape = (s) => String(s).replace(/[<&]/g, (c) => (c === '<' ? '&lt;' : '&amp;'));
+const fail = (message) => { reportHost.innerHTML = `<pre class="err">${escape(message)}</pre>`; };
+
+/**
+ * Evaluate a pasted level file.
+ *
+ * Imported as a module from a blob URL rather than parsed by hand, so the exact
+ * file a contributor will commit is what gets evaluated — comments, trailing
+ * commas and all. A bare object literal is accepted too, for convenience.
+ */
+async function parseLevel(source) {
+  const text = /\bexport\s+default\b/.test(source) ? source : `export default ${source.trim().replace(/;$/, '')};`;
+  const url = URL.createObjectURL(new Blob([text], { type: 'text/javascript' }));
+  try {
+    const module = await import(url);
+    if (!module.default || typeof module.default !== 'object') {
+      throw new Error('The file has no default export, or it is not an object.');
+    }
+    return module.default;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+function clearCanvas(background = '#000') {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = background;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+}
+
+function draw(level) {
+  clearCanvas(level.background ?? '#000');
+  cache.invalidate();
+  drawField(renderer, cache, createGrid(level));
+  drawPaddle(renderer, createPaddle(level));
+}
+
+/** Tally the non-empty characters of a character grid. Shared by both grids. */
+function countChars(rows) {
+  const counts = new Map();
+  for (const row of Array.isArray(rows) ? rows : []) {
+    if (typeof row !== 'string') continue;
+    for (const ch of row) {
+      if (EMPTY_CHARS.includes(ch)) continue;
+      counts.set(ch, (counts.get(ch) ?? 0) + 1);
+    }
+  }
+  return counts;
+}
+
+function describeType(spec) {
+  return [
+    spec.solid ? 'solid' : `hp ${spec.hp ?? 1}`,
+    spec.explode ? `explode ${spec.explode}${spec.chain === false ? ' (no chain)' : ' (chains)'}` : null,
+    spec.powerup !== undefined
+      ? `powerup ${typeof spec.powerup === 'number' ? spec.powerup : spec.powerup.chance}`
+      : null,
+  ].filter(Boolean).join(', ');
+}
+
+function report(level, error) {
+  const counts = countChars(level.grid);
+  const filled = [...counts.values()].reduce((a, b) => a + b, 0);
+
+  let hits = null;
+  try {
+    hits = Math.round(estimateHitsToClear(level));
+  } catch { /* a malformed grid is already reported by the validator */ }
+
+  const hitsCell = hits === null
+    ? '<span class="bad">—</span>'
+    : `<span class="${hits < MIN_HITS || hits > MAX_HITS ? 'bad' : (hits > MAX_HITS * 0.8 ? 'warn' : 'ok')}">${hits}</span>
+       <span style="color:#8a8aa0">(allowed ${MIN_HITS}–${MAX_HITS})</span>`;
+
+  let paddleInfo = '<span class="bad">—</span>';
+  try {
+    const box = paddleBox(createPaddle(level));
+    paddleInfo = `${box.w} × ${box.h} cells`;
+  } catch { /* likewise */ }
+
+  const typeRows = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([ch, n]) => {
+      const spec = level.types?.[ch];
+      if (!spec) {
+        return `<tr><td><code>${escape(ch)}</code></td>
+                <td class="bad">${n} cells — no entry in types</td></tr>`;
+      }
+      return `<tr><td><span class="swatch" style="background:${escape(spec.color ?? '#000')}"></span><code>${escape(ch)}</code></td>
+              <td>${n} cells — ${escape(describeType(spec))}</td></tr>`;
+    }).join('');
+
+  const paddleRows = [...countChars(level.paddle?.grid).entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([ch, n]) => {
+      const color = level.paddle?.colors?.[ch];
+      if (!color) {
+        return `<tr><td><code>${escape(ch)}</code></td>
+                <td class="bad">${n} pixels — no entry in paddle.colors</td></tr>`;
+      }
+      return `<tr><td><span class="swatch" style="background:${escape(color)}"></span><code>${escape(ch)}</code></td>
+              <td>${n} pixels — ${escape(color)}</td></tr>`;
+    }).join('');
+
+  reportHost.innerHTML = `
+    <table>
+      <tr><td>id</td><td>${escape(level.id ?? '—')}</td></tr>
+      <tr><td>pairing</td><td>${escape(level.item ?? '?')} → ${escape(level.target ?? '?')}</td></tr>
+      <tr><td>author</td><td>${escape(level.author ?? '—')}</td></tr>
+      <tr><td>valid</td><td class="${error ? 'bad' : 'ok'}">${error ? 'FAILS VALIDATION' : 'passes'}</td></tr>
+      <tr><td>filled</td><td>${filled} cells</td></tr>
+      <tr><td>est. hits</td><td>${hitsCell}</td></tr>
+      <tr><td>paddle</td><td>${paddleInfo}</td></tr>
+    </table>
+    ${error ? `<h2>Validation error</h2><pre class="err">${escape(error.message)}</pre>` : ''}
+    ${typeRows ? `<h2>Block types</h2><table>${typeRows}</table>` : ''}
+    ${paddleRows ? `<h2>Paddle pixels</h2><table>${paddleRows}</table>` : ''}`;
+}
+
+async function update() {
+  const source = editor.value.trim();
+  if (!source) {
+    clearCanvas();
+    reportHost.innerHTML = '<p class="hint">Paste a level file to see it.</p>';
+    return;
+  }
+
+  let level;
+  try {
+    level = await parseLevel(source);
+  } catch (error) {
+    clearCanvas();
+    fail(`Could not read the file.\n\n${error.message}`);
+    return;
+  }
+
+  let validation = null;
+  try {
+    validateLevel(level);
+  } catch (error) {
+    validation = error;
+  }
+
+  // An invalid level is still worth drawing — seeing the shape is usually how
+  // you work out what the validator is complaining about.
+  try {
+    draw(level);
+  } catch (error) {
+    clearCanvas('#2a1414');
+    console.error(error);
+  }
+  report(level, validation);
+}
+
+let pending;
+editor.addEventListener('input', () => {
+  clearTimeout(pending);
+  pending = setTimeout(update, 250);
+});
+
+function insertTab() {
+  // execCommand is deprecated, but it is still the only way to insert text and
+  // keep the browser's native undo stack — setRangeText alone discards it.
+  // It also fires `input` itself, which is what triggers the re-render.
+  if (document.execCommand?.('insertText', false, '\t')) return;
+
+  const { selectionStart, selectionEnd } = editor;
+  editor.setRangeText('\t', selectionStart, selectionEnd, 'end');
+  editor.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+editor.addEventListener('keydown', (event) => {
+  // Escape leaves the field, so Tab is not a keyboard trap: Escape then Tab
+  // moves on, and Shift+Tab still steps backwards.
+  if (event.key === 'Escape') {
+    editor.blur();
+    return;
+  }
+  if (event.key !== 'Tab' || event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) return;
+  event.preventDefault();
+  insertTab();
+});
+
+/**
+ * Render a level object back out as a level file.
+ *
+ * The sample is imported and re-serialised rather than fetched as text, so the
+ * tool has no async dependency and works the moment it opens. The output is a
+ * genuine, valid level file — only the original's comments are lost.
+ */
+function toSource(level) {
+  const key = (ch) => (/^[A-Za-z_$][\w$]*$/.test(ch) ? ch : `'${ch}'`);
+  const rows = (list, indent) => list.map((row) => `${indent}'${row}',`).join('\n');
+  const types = Object.entries(level.types)
+    .map(([ch, spec]) => `    ${key(ch)}: ${JSON.stringify(spec)},`)
+    .join('\n');
+
+  return `export default {
+  id: '${level.id}',
+  item: '${level.item}',
+  target: '${level.target}',
+  author: '${level.author ?? ''}',
+  background: '${level.background}',
+  ballColor: '${level.ballColor}',
+
+  types: {
+${types}
+  },
+
+  grid: [
+${rows(level.grid, '    ')}
+  ],
+
+  paddle: {
+    colors: ${JSON.stringify(level.paddle.colors)},
+    grid: [
+${rows(level.paddle.grid, '      ')}
+    ],
+  },
+};
+`;
+}
+
+// Start from a real level, so the tool is useful before anything is pasted and
+// the expected shape of a file is obvious.
+editor.value = toSource(sampleLevel);
+update();
+</script>
+</body>
+</html>
