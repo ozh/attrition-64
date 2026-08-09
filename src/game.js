@@ -39,13 +39,18 @@ export function createGame({ levels, storage, audio, random = Math.random }) {
     initialBlocks: 1,
     laserCooldown: 0,
     update,
+    // Read by the debug panel, and by tests.
+    targetSpeed,
     // Test seams. They mutate the same state the game does, nothing more.
     hitCell: (cx, cy) => sim.hitCell(cx, cy),
     clearGridForTest() { game.grid.remaining = 0; },
     endRunForTest: endRun,
   };
 
-  const clearedFraction = () => 1 - game.grid.remaining / game.initialBlocks;
+  // Guarded: with no valid levels there is no grid, and targetSpeed is public
+  // enough now — the debug panel reads it in every state — that it must not
+  // throw outside a running game.
+  const clearedFraction = () => (game.grid ? 1 - game.grid.remaining / game.initialBlocks : 0);
 
   function targetSpeed() {
     const ramp = 1 + C.BALL_SPEED_RAMP * clearedFraction();

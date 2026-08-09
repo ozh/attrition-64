@@ -33,9 +33,18 @@ test('it rises monotonically', () => {
 });
 
 test('it is capped, so a long stall stays playable', () => {
-  for (const seconds of [600, 3600, 1e6]) {
-    assert.equal(timeSpeedFactor(seconds), TIME_ACCEL_MAX, `at ${seconds}s`);
+  // Derived, not hardcoded: a fixed "600s should be capped" silently becomes
+  // wrong the moment TIME_ACCEL_MAX is retuned.
+  const reachesCap = TIME_ACCEL_SECONDS * (Math.log(TIME_ACCEL_MAX) / Math.log(1 + TIME_ACCEL_STEP));
+  assert.ok(timeSpeedFactor(reachesCap * 0.9) < TIME_ACCEL_MAX, 'not capped before it should be');
+  for (const seconds of [reachesCap, reachesCap * 2, 1e6]) {
+    assert.equal(timeSpeedFactor(seconds), TIME_ACCEL_MAX, `at ${Math.round(seconds)}s`);
   }
+});
+
+test('the cap is reached in a plausible amount of play', () => {
+  const reachesCap = TIME_ACCEL_SECONDS * (Math.log(TIME_ACCEL_MAX) / Math.log(1 + TIME_ACCEL_STEP));
+  assert.ok(reachesCap > 60, `capping after ${Math.round(reachesCap)}s would flatten the curve early`);
 });
 
 test('rubbish input falls back to the base speed rather than NaN', () => {
