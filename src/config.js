@@ -17,8 +17,20 @@ export const DRAIN_ROW = 100;          // a ball whose top passes this is lost
 
 // Ball
 export const BALL_SIZE = 1;            // AABB side, in cells
-export const BALL_SPEED = 42;          // cells per second
+export const BALL_SPEED = 50;          // cells per second
 export const BALL_SPEED_RAMP = 0.25;   // +25% by the time the grid is cleared
+
+// The ball also speeds up the longer a life lasts, so stalling costs something
+// and three lives are three attempts rather than three goes at the same one.
+// Applied continuously, not in steps: a jump every 15 seconds reads as a glitch
+// with no visible cause. The cap only exists so the ball stays playable if
+// someone digs in for ten minutes.
+//
+// This compounds with BALL_SPEED_RAMP above — a nearly-cleared grid three
+// minutes in runs at roughly 1.25 x 1.27, about +59%.
+export const TIME_ACCEL_STEP = 0.02;     // +2% ...
+export const TIME_ACCEL_SECONDS = 15;    // ... every 15 seconds of play
+export const TIME_ACCEL_MAX = 2.5;         // never faster than 2,5 initial speed
 export const BALL_MAX_ANGLE = Math.PI / 3;   // 60 degrees off vertical
 export const SERVE_ANGLE = Math.PI / 8;
 export const STEP = 1 / 120;           // fixed physics timestep, seconds

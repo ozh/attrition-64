@@ -4,6 +4,7 @@ import { createGame, NEUTRAL_INTENT } from '../src/game.js';
 import { createStorage } from '../src/storage.js';
 import { isCleared } from '../src/engine/grid.js';
 import { paddleBox } from '../src/engine/paddle.js';
+import { timeSpeedFactor } from '../src/engine/speed.js';
 import {
   LIVES, DRAIN_ROW, LIFE_LOST_HOLD, STEP, ENDGAME_RELIEF, POWERUP_KINDS,
   RELIEF_FLASH_SECONDS, CEILING, FIELD_W, SHIELD_ROW, GRID_TOP,
@@ -487,4 +488,71 @@ test('a piercing ball still bounces off indestructible blocks', () => {
 
   aimIntoBlocks(g, 12);           // far enough up to reach the solid row
   assert.ok(g.balls[0].vy > 0, 'a solid row must still turn a piercing ball back');
+});
+
+// --- time acceleration ------------------------------------------------------
+
+/**
+ * Put the ball into a horizontal orbit below the blocks and above the paddle.
+ * It bounces between the walls forever: never drains, never hits a block, so
+ * neither the clear ramp nor a lost life can pollute a speed measurement.
+ */
+function orbitBall(g) {
+  const ball = g.balls[0];
+  ball.stuck = false;
+  ball.x = 20;
+  ball.y = 50;
+  ball.vx = Math.hypot(ball.vx, ball.vy);
+  ball.vy = 0;
+}
+
+const speedOf = (g) => Math.hypot(g.balls[0].vx, g.balls[0].vy);
+const runLive = (g, seconds) => {
+  for (let t = 0; t < seconds / STEP; t++) g.update(STEP, NEUTRAL_INTENT);
+};
+
+test('the ball speeds up the longer a life lasts', () => {
+  const g = playing();
+  orbitBall(g);
+  runLive(g, 1);
+  const start = speedOf(g);
+
+  runLive(g, 60);
+  const later = speedOf(g);
+
+  assert.ok(later > start, `expected acceleration, ${start} -> ${later}`);
+  assert.ok(Math.abs(later / start - timeSpeedFactor(61)) < 0.02,
+    `expected about x${timeSpeedFactor(61).toFixed(3)}, got x${(later / start).toFixed(3)}`);
+});
+
+test('dying puts the ball back to its starting speed', () => {
+  const g = playing();
+  orbitBall(g);
+  runLive(g, 60);
+  assert.ok(g.playTime > 55, 'the clock ran');
+
+  dropBall(g);
+  for (let t = 0; t < LIFE_LOST_HOLD / STEP + 2; t++) g.update(STEP, NEUTRAL_INTENT);
+  assert.equal(g.playTime, 0, 'a new life starts from scratch');
+});
+
+test('moving to the next level also resets it', () => {
+  const g = game([testLevel(), testLevel({ title: 'TWO' })]);
+  g.update(STEP, press);
+  g.update(STEP, press);
+  orbitBall(g);
+  runLive(g, 45);
+  assert.ok(g.playTime > 40);
+
+  g.clearGridForTest();
+  for (let t = 0; t < 400; t++) g.update(STEP, NEUTRAL_INTENT);
+  assert.equal(g.levelIndex, 1);
+  assert.equal(g.playTime, 0, 'each level is a fresh challenge');
+});
+
+test('the clock only runs while a ball is live', () => {
+  const g = game();
+  g.update(STEP, press);          // title -> serve, ball parked on the paddle
+  run(g, 5);
+  assert.equal(g.playTime, 0, 'waiting on the serve screen is not stalling');
 });

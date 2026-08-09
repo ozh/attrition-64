@@ -4,6 +4,7 @@ import { createPaddle, paddleBox, movePaddle, setPaddleCenter, setPaddleScale } 
 import { createEffects, tickEffects, hasEffect, clearEffects } from './engine/effects.js';
 import { createSimulation } from './simulation.js';
 import { createRelief } from './engine/relief.js';
+import { timeSpeedFactor } from './engine/speed.js';
 import * as C from './config.js';
 
 export const NEUTRAL_INTENT = {
@@ -34,6 +35,7 @@ export function createGame({ levels, storage, audio, random = Math.random }) {
     piercing: false,
     piercingArmed: false,
     hold: 0,
+    playTime: 0,
     initialBlocks: 1,
     laserCooldown: 0,
     update,
@@ -49,7 +51,7 @@ export function createGame({ levels, storage, audio, random = Math.random }) {
     const ramp = 1 + C.BALL_SPEED_RAMP * clearedFraction();
     const effect = hasEffect(game.effects, 'slowBall') ? C.SLOW_BALL_MUL
       : hasEffect(game.effects, 'fastBall') ? C.FAST_BALL_MUL : 1;
-    return C.BALL_SPEED * ramp * effect;
+    return C.BALL_SPEED * ramp * effect * timeSpeedFactor(game.playTime);
   }
 
   const scoreMultiplier = () => (hasEffect(game.effects, 'fastBall') ? C.FAST_BALL_SCORE_MUL : 1);
@@ -78,6 +80,7 @@ export function createGame({ levels, storage, audio, random = Math.random }) {
     game.shield = false;
     game.piercing = false;
     game.piercingArmed = false;
+    game.playTime = 0;
     game.laserCooldown = 0;
 
     const box = paddleBox(game.paddle);
@@ -102,6 +105,8 @@ export function createGame({ levels, storage, audio, random = Math.random }) {
         if (intent.action) launch();
         break;
       case 'playing':
+        // Only while a ball is actually live: holds and menus are not stalling.
+        game.playTime += dt;
         steer(intent, dt);
         expireEffects(dt);
         followPaddle();

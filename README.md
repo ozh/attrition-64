@@ -32,6 +32,11 @@ Three lives. A life is lost only when the *last* ball drains, so multiball is a
 real safety net. Damage to the blocks persists when you die — dying never undoes
 progress.
 
+**The ball speeds up the longer a life lasts** — about +2% every fifteen seconds,
+compounding, capped at double. Taking your time is the thing that kills you. The
+clock resets when you lose a life and when you reach a new level, so three lives
+are three attempts rather than three goes at the same one.
+
 Blocks drop eight kinds of pickup, colour-coded so you can see what is coming:
 multiball, wide paddle, slow ball, fast ball (which also doubles your score
 while active), sticky paddle, lasers, a piercing ball that ploughs straight

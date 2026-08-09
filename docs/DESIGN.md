@@ -297,6 +297,22 @@ Speed is preserved through the bounce. Base speed ramps to **+25%** as the level
 is cleared, so the last few blocks are tense rather than tedious, then is
 multiplied by any active speed effect.
 
+**Amended:** speed also compounds with time. A life that has run three minutes is
+about 27% faster than a fresh one — `TIME_ACCEL_STEP` per `TIME_ACCEL_SECONDS`,
+capped at `TIME_ACCEL_MAX`. Continuous rather than stepped, because a jump every
+fifteen seconds reads as a glitch with no visible cause.
+
+The clock is per life *and* per level, cleared in `resetForServe()`. That makes
+stalling the thing that kills you, which is what gives three lives any weight:
+without it, a careful player faces the same level three identical times. It
+multiplies with the clear ramp above, so a nearly-empty grid three minutes in
+runs at roughly +59%.
+
+Paddle width is deliberately **not** normalised. It ranges from 16% of the
+playfield to 28% across the shipped levels, which is a real difficulty spread —
+but it is a per-level design choice, like the powerup density and the blast
+radii, not an oversight to be flattened.
+
 ## Explosions
 
 When a block reaches zero hp and its type has `explode: N`, every cell within

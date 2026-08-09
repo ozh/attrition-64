@@ -96,13 +96,13 @@ export default {
 
 
   paddle: {
-    colors: { b: '#c8402f', w: '#9fd8f0', t: '#1a1a1a' },
+    colors: { b: '#c8402f', w: '#9fd8f0', t: '#6a6a6a' },
     grid: [
       '......bbbbbbbb.....',
       '.....wwwwbbwwwbb...',
-      '...wwwwwwbbwwwbbbb.',
+      '..bbbwwwwbbwwwbbbb.',
       'bbbbbbbbbbbbbbbbbb.',
-      'bbbbbbbbbbbbbbbbbb.',
+      'bbttbbbbbbbbbbttbb.',
       '..tt..........tt...',
     ],
   },
