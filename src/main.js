@@ -1,4 +1,5 @@
 import { createRenderer } from './render/canvas.js';
+import { surroundColor } from './render/surround.js';
 import { createFieldCache, drawField } from './render/field.js';
 import {
   drawPaddle, drawBalls, drawDrops, drawShots, drawFlashes, drawShield, DROP_COLORS,
@@ -27,6 +28,17 @@ window.addEventListener('orientationchange', () => renderer.fit());
 // Hide the pointer only while the paddle is under the player's control. The
 // hold states are included so the cursor does not blink back for a second
 // between losing a life and serving again.
+// The page behind the canvas, tinted from the level's own background so the
+// playfield always has a visible edge. Only written when the level changes.
+let surround = null;
+
+function updateSurround() {
+  const wanted = surroundColor(game.level?.background);
+  if (wanted === surround) return;
+  surround = wanted;
+  document.body.style.background = wanted;
+}
+
 const CURSOR_HIDDEN_STATES = new Set(['serve', 'playing', 'lifeLost', 'levelClear']);
 let cursorHidden = null;
 
@@ -42,6 +54,7 @@ let previous = performance.now();
 
 function render() {
   updateCursor();
+  updateSurround();
   renderer.clear(game.level?.background ?? '#000000');
   if (game.grid) {
     drawField(renderer, fieldCache, game.grid);

@@ -11,13 +11,6 @@
 <link rel="icon" type="image/png" href="assets/icons/icon-192.png" sizes="192x192">
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
-
-<!-- ┌──────────────────────────────────────────────────────────────────────┐
-     │ EDIT THESE TWO URLS WHEN THE SITE GOES LIVE.                         │
-     │ og:image and og:url must be absolute — Facebook and Twitter will not │
-     │ resolve a relative path, so a wrong host here means no share preview │
-     │ at all, silently. Everything else in this project is relative.       │
-     └──────────────────────────────────────────────────────────────────────┘ -->
 <meta property="og:url" content="https://ozh.github.io/attrition-64/">
 <meta property="og:image" content="https://ozh.github.io/attrition-64/assets/icons/og-image.png">
 
@@ -32,8 +25,8 @@
 <style>
   html, body {
     margin: 0;
-    height: 100%;
-    background: #000;
+    height: 100%; /* Replaced at runtime by surroundColor() */
+    background: #161616;
     overflow: hidden;
     overscroll-behavior: none;
   }
