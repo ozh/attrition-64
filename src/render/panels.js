@@ -34,6 +34,13 @@ export const WELCOME = {
   ],
 };
 
+/**
+ * Shown at the end of a run, won or lost.
+ *
+ * The same copy either way: you have finished playing in both cases, and the
+ * invitation to contribute is no less true for having died on level three.
+ * Only the heading changes.
+ */
 export const FAREWELL = {
   title: 'CLEARED',
   lines: [
@@ -46,6 +53,9 @@ export const FAREWELL = {
     'SEE THE DOCS TO ADD ONE.',
   ],
 };
+
+/** The end-of-run panel, titled for the outcome. */
+export const outcomePanel = (cleared) => ({ ...FAREWELL, title: cleared ? 'CLEARED' : 'LOST' });
 
 /**
  * Draw a bordered panel of text, centred, sized to its own content.

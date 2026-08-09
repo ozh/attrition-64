@@ -11,8 +11,8 @@ paddle against a wall of lung-shaped blocks.
 
 The game makes no argument about it. There is no commentary, no message screen,
 no level titles — the sprites carry the whole idea and the player draws their own
-conclusion. The only text in the game is the HUD (score, lives, level number) and
-`GAME OVER`.
+conclusion. The only text in the game is the HUD (score, lives, level title) and
+the panels that open and close a run.
 
 The project is built to accept levels from strangers. Adding a new item/target
 pair is a single new file plus a one-line registry edit, and a load-time
@@ -401,9 +401,13 @@ transition is readable.
 **Amended:** the title and win screens are panels of text rather than a single
 prompt line — the game's name, what a paddle and a block are, the controls, and
 on finishing an invitation to contribute. That widens "the only text is the HUD,
-GAME OVER and prompts", but the addition is instruction and invitation rather
+the end-of-run notice and prompts", but the addition is instruction and invitation rather
 than commentary: nothing on those screens has an opinion about smoking, drinking
 or driving.
+
+A run ends on the same panel whether it was won or lost — the copy is identical,
+only the heading changes between `CLEARED` and `LOST`. Dying on level three is
+still having finished playing, and the invitation to contribute is no less true.
 
 Set in the same 3x5 bitmap font as the HUD, at 2x for headings. A TrueType face
 would be more legible, but the canvas is upscaled by an integer factor with

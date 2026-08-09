@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { WELCOME, FAREWELL, panelWidth } from '../src/render/panels.js';
+import { WELCOME, FAREWELL, outcomePanel, panelWidth } from '../src/render/panels.js';
 import { glyph, textWidth } from '../src/render/hud.js';
 import { BASE_W } from '../src/config.js';
 
 const TOFU = [7, 5, 5, 5, 7];
-const PANELS = { WELCOME, FAREWELL };
+const PANELS = { WELCOME, FAREWELL, LOST: outcomePanel(false), CLEARED: outcomePanel(true) };
 const FOOTER = 'HIGH SCORE 999999 - PRESS SPACE OR TAP';
 
 test('every character in the panel copy exists in the font', () => {
@@ -44,4 +44,19 @@ test('panels keep their blank separator lines', () => {
   for (const [name, panel] of Object.entries(PANELS)) {
     assert.ok(panel.lines.includes(''), `${name} has no blank line to break it up`);
   }
+});
+
+test('the end panel is titled for the outcome', () => {
+  assert.equal(outcomePanel(true).title, 'CLEARED');
+  assert.equal(outcomePanel(false).title, 'LOST');
+});
+
+test('winning and losing share their copy, only the heading differs', () => {
+  assert.deepEqual(outcomePanel(true).lines, outcomePanel(false).lines);
+});
+
+test('naming an outcome does not mutate the shared panel', () => {
+  const before = FAREWELL.title;
+  outcomePanel(false);
+  assert.equal(FAREWELL.title, before, 'outcomePanel must copy, not edit in place');
 });

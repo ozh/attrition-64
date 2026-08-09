@@ -1,5 +1,5 @@
 import { drawTextCentered } from './hud.js';
-import { drawPanel, WELCOME, FAREWELL } from './panels.js';
+import { drawPanel, WELCOME, outcomePanel } from './panels.js';
 import { BASE_W, BASE_H } from '../config.js';
 
 // The only text the game shows beyond the HUD. No commentary, per the design:
@@ -27,14 +27,6 @@ export function drawScreens(renderer, game) {
   const PROMPT_Y = 288;
   const promptLine = (color) => drawTextCentered(renderer, 'PRESS SPACE OR TAP', PROMPT_Y, color);
 
-  const result = (word) => {
-    dim(0.65);
-    panel(BASE_H / 2 - 16, 44);
-    drawTextCentered(renderer, word, BASE_H / 2 - 12, '#ffffff');
-    drawTextCentered(renderer, String(game.score), BASE_H / 2, '#ffffff');
-    drawTextCentered(renderer, 'PRESS SPACE OR TAP', BASE_H / 2 + 14, '#8899aa');
-  };
-
   switch (game.state) {
     case 'title':
       dim(0.62);
@@ -45,11 +37,12 @@ export function drawScreens(renderer, game) {
       promptLine('#66788a');
       break;
     case 'gameOver':
-      result('GAME OVER');
+      dim(0.7);
+      drawPanel(renderer, outcomePanel(false), `SCORE ${game.score} - PRESS SPACE OR TAP`);
       break;
     case 'win':
       dim(0.7);
-      drawPanel(renderer, FAREWELL, `SCORE ${game.score} - PRESS SPACE OR TAP`);
+      drawPanel(renderer, outcomePanel(true), `SCORE ${game.score} - PRESS SPACE OR TAP`);
       break;
     case 'error':
       panel(BASE_H / 2 - 8, 22);

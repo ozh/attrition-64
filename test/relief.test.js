@@ -3,20 +3,32 @@ import assert from 'node:assert/strict';
 import { reliefInterval, createRelief, tickRelief } from '../src/engine/relief.js';
 import { ENDGAME_RELIEF } from '../src/config.js';
 
-const [LOOSE, MID, TIGHT] = ENDGAME_RELIEF;
+// Derived from the table rather than destructured: the number of tiers is a
+// tuning decision and has already changed once.
+const LOOSE = ENDGAME_RELIEF[0];
+const TIGHT = ENDGAME_RELIEF[ENDGAME_RELIEF.length - 1];
+
+/** What the tightest-match rule should return, computed from the table. */
+const expected = (fraction) => ENDGAME_RELIEF
+  .filter((tier) => fraction <= tier.remaining)
+  .map((tier) => tier.everySeconds)
+  .at(-1) ?? null;
 
 test('no relief while there is still plenty of grid left', () => {
-  for (const fraction of [1, 0.5, 0.2, LOOSE.remaining + 0.001]) {
+  for (const fraction of [1, LOOSE.remaining + 0.2, LOOSE.remaining + 0.001]) {
     assert.equal(reliefInterval(fraction), null, `fraction ${fraction}`);
   }
 });
 
-test('the tightest matching tier wins', () => {
-  assert.equal(reliefInterval(LOOSE.remaining), LOOSE.everySeconds);
-  assert.equal(reliefInterval(MID.remaining + 0.001), LOOSE.everySeconds);
-  assert.equal(reliefInterval(MID.remaining), MID.everySeconds);
-  assert.equal(reliefInterval(TIGHT.remaining), TIGHT.everySeconds);
+test('the tightest matching tier wins, at every tier', () => {
+  for (const tier of ENDGAME_RELIEF) {
+    assert.equal(reliefInterval(tier.remaining), expected(tier.remaining),
+      `at the ${tier.remaining} threshold`);
+    assert.equal(reliefInterval(tier.remaining + 0.001), expected(tier.remaining + 0.001),
+      `just above the ${tier.remaining} threshold`);
+  }
   assert.equal(reliefInterval(0), TIGHT.everySeconds, 'an empty grid still resolves');
+  assert.equal(reliefInterval(LOOSE.remaining), LOOSE.everySeconds, 'the first tier is reachable');
 });
 
 test('the cadence tightens rather than loosening', () => {

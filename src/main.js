@@ -1,5 +1,6 @@
 import { createRenderer } from './render/canvas.js';
 import { surroundColor } from './render/surround.js';
+import { debugSnapshot } from './render/debug.js';
 import { createFieldCache, drawField } from './render/field.js';
 import {
   drawPaddle, drawBalls, drawDrops, drawShots, drawFlashes, drawShield, DROP_COLORS,
@@ -11,7 +12,7 @@ import { createStorage } from './storage.js';
 import { createAudio } from './audio.js';
 import { loadLevels } from './levels/index.js';
 import { createGame, NEUTRAL_INTENT } from './game.js';
-import { STEP, MAX_STEPS_PER_FRAME } from './config.js';
+import { STEP, MAX_STEPS_PER_FRAME, DEBUG, DEBUG_REFRESH_MS } from './config.js';
 
 const canvas = document.getElementById('game');
 // Height of the strip under the canvas, so the fit leaves room for it.
@@ -22,7 +23,8 @@ const fieldCache = createFieldCache(window);
 const storage = createStorage(window.localStorage);
 const audio = createAudio(storage, window);
 const input = createInput(canvas, window);
-const game = createGame({ levels: await loadLevels(), storage, audio });
+const levels = await loadLevels();
+const game = createGame({ levels, storage, audio });
 
 renderer.fit();
 window.addEventListener('resize', () => renderer.fit());
@@ -59,6 +61,32 @@ function updateCursor() {
   if (hide === cursorHidden) return;      // avoid touching the DOM every frame
   cursorHidden = hide;
   canvas.classList.toggle('hide-cursor', hide);
+}
+
+// --- debug read-out --------------------------------------------------------
+const debugEl = document.getElementById('debug');
+let framesSinceReport = 0;
+let lastReport = 0;
+let fps = 0;
+
+function updateDebug(now) {
+  framesSinceReport += 1;
+  if (now - lastReport < DEBUG_REFRESH_MS) return;
+
+  fps = (framesSinceReport * 1000) / (now - lastReport);
+  framesSinceReport = 0;
+  lastReport = now;
+
+  debugEl.innerHTML = debugSnapshot(game, { fps, levelCount: levels.length })
+    .map(([label, value]) => (label === undefined
+      ? ''
+      : `${String(label).padEnd(14)}<b>${value}</b>`))
+    .join('\n');
+}
+
+if (DEBUG) {
+  debugEl.style.display = 'block';
+  debugEl.removeAttribute('aria-hidden');
 }
 
 let accumulator = 0;
@@ -108,6 +136,7 @@ function frame(now) {
   if (steps === MAX_STEPS_PER_FRAME) accumulator = 0;
 
   render();
+  if (DEBUG) updateDebug(now);
   requestAnimationFrame(frame);
 }
 
