@@ -14,7 +14,10 @@ import { createGame, NEUTRAL_INTENT } from './game.js';
 import { STEP, MAX_STEPS_PER_FRAME } from './config.js';
 
 const canvas = document.getElementById('game');
-const renderer = createRenderer(canvas, window);
+// Height of the strip under the canvas, so the fit leaves room for it.
+const CHROME_HEIGHT = 26;
+const creditEl = document.getElementById('credit');
+const renderer = createRenderer(canvas, window, { reservedH: CHROME_HEIGHT });
 const fieldCache = createFieldCache(window);
 const storage = createStorage(window.localStorage);
 const audio = createAudio(storage, window);
@@ -31,6 +34,15 @@ window.addEventListener('orientationchange', () => renderer.fit());
 // The page behind the canvas, tinted from the level's own background so the
 // playfield always has a visible edge. Only written when the level changes.
 let surround = null;
+let credit = null;
+
+function updateCredit() {
+  const author = game.level?.author;
+  const text = author ? `level by ${author}` : '';
+  if (text === credit) return;
+  credit = text;
+  creditEl.textContent = text;
+}
 
 function updateSurround() {
   const wanted = surroundColor(game.level?.background);
@@ -55,6 +67,7 @@ let previous = performance.now();
 function render() {
   updateCursor();
   updateSurround();
+  updateCredit();
   renderer.clear(game.level?.background ?? '#000000');
   if (game.grid) {
     drawField(renderer, fieldCache, game.grid);

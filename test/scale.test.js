@@ -51,3 +51,29 @@ test('a missing or absurd dpr falls back to 1', () => {
   assert.equal(withDefault.scale, withOne.scale);
   assert.ok(computeFit({ viewportW: 800, viewportH: 800, dpr: 0 }).scale >= 1);
 });
+
+test('reserved height comes out of the budget before scaling', () => {
+  const full = computeFit({ viewportW: 1400, viewportH: 900, dpr: 1 });
+  const reserved = computeFit({ viewportW: 1400, viewportH: 900, dpr: 1, reservedH: 500 });
+  assert.ok(reserved.scale < full.scale, 'reserving space must shrink the canvas');
+});
+
+test('canvas plus reserved chrome still fits the viewport', () => {
+  const CHROME = 28;
+  for (const [w, h, dpr] of [[1400, 900, 1], [390, 844, 3], [768, 1024, 2]]) {
+    const fit = computeFit({ viewportW: w, viewportH: h, dpr, reservedH: CHROME });
+    assert.ok(fit.cssH + CHROME <= h + 1e-9,
+      `${w}x${h}@${dpr}: canvas ${fit.cssH} + chrome ${CHROME} > ${h}`);
+  }
+});
+
+test('reserving nothing behaves exactly as before', () => {
+  const a = computeFit({ viewportW: 1400, viewportH: 900, dpr: 1 });
+  const b = computeFit({ viewportW: 1400, viewportH: 900, dpr: 1, reservedH: 0 });
+  assert.deepEqual(a, b);
+});
+
+test('absurd reservation still yields a usable canvas', () => {
+  const fit = computeFit({ viewportW: 800, viewportH: 100, dpr: 1, reservedH: 5000 });
+  assert.ok(fit.scale >= 1, 'never zero, which would be a canvas of no size');
+});

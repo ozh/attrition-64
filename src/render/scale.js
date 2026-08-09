@@ -8,10 +8,13 @@ import { BASE_W, BASE_H } from '../config.js';
  * 1170 device pixels available allow 4x, which nearly fills the screen and is
  * still pixel-exact.
  */
-export function computeFit({ viewportW, viewportH, dpr = 1 }) {
+export function computeFit({ viewportW, viewportH, dpr = 1, reservedH = 0 }) {
   const ratio = Number.isFinite(dpr) && dpr > 0 ? dpr : 1;
   const deviceAvailW = viewportW * ratio;
-  const deviceAvailH = viewportH * ratio;
+  // Chrome below the canvas — the repo link and level credit — has to come out
+  // of the height budget, or the canvas is sized to the full viewport and the
+  // last rows are pushed off the bottom of the page.
+  const deviceAvailH = Math.max(1, viewportH - reservedH) * ratio;
 
   const scale = Math.max(1, Math.floor(Math.min(deviceAvailW / BASE_W, deviceAvailH / BASE_H)));
   const deviceW = BASE_W * scale;

@@ -5,7 +5,7 @@ import { CELL, BASE_W, BASE_H } from '../config.js';
  * Owns the visible canvas. Drawing happens in backing-pixel space (256x400);
  * a transform scales that to device pixels, so callers never think about DPR.
  */
-export function createRenderer(canvas, win = window) {
+export function createRenderer(canvas, win = window, { reservedH = 0 } = {}) {
   const ctx = canvas.getContext('2d', { alpha: false });
   let scale = 1;
 
@@ -14,6 +14,7 @@ export function createRenderer(canvas, win = window) {
       viewportW: win.innerWidth,
       viewportH: win.innerHeight,
       dpr: win.devicePixelRatio || 1,
+      reservedH,
     });
     scale = result.scale;
     canvas.width = result.deviceW;

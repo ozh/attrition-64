@@ -7,7 +7,7 @@ const TITLE_SCALE = 2;
 const TITLE_GAP = 7;
 
 const BORDER = '#3a4a5c';
-const FILL = 'rgba(0, 0, 0, 0.92)';
+const FILL = 'rgba(0, 0, 0, 0.82)';
 const HEADING = '#ffffff';
 const BODY = '#b8c6d4';
 const DIM = '#7d8b99';
@@ -28,7 +28,7 @@ export const WELCOME = {
     'MOVE : ARROWS, MOUSE OR DRAG',
     'SERVE : SPACE OR TAP',
     'FIRE : SPACE OR TAP, ONCE ARMED',
-    'MUTE : M',
+    'MUTE : CTRL M',
     '',
     'CATCH WHAT FALLS. SOME OF IT HELPS.',
   ],

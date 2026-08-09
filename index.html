@@ -38,6 +38,21 @@
       env(safe-area-inset-top) env(safe-area-inset-right)
       env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
+  /* Canvas and the strip beneath it move as one block, so the strip is exactly
+     as wide as the playfield whatever the scale factor works out to be. */
+  .stage { display: flex; flex-direction: column; }
+  #chrome {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 1px 0;
+    font: 11px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: rgba(255, 255, 255, 0.34);
+    user-select: none;
+  }
+  #chrome a { color: inherit; text-decoration: none; }
+  #chrome a:hover, #chrome a:focus-visible { color: rgba(255, 255, 255, 0.72); }
+  #credit { text-align: right; }
   canvas {
     display: block;
     image-rendering: pixelated;
@@ -51,7 +66,14 @@
 </style>
 </head>
 <body>
-  <canvas id="game"></canvas>
+  <div class="stage">
+    <canvas id="game"></canvas>
+    <div id="chrome">
+      <a href="https://github.com/ozh/attrition-64" rel="noopener noreferrer"
+         >github.com/ozh/attrition-64</a>
+      <span id="credit"></span>
+    </div>
+  </div>
   <script type="module" src="src/main.js"></script>
 </body>
 </html>
