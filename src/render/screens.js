@@ -1,4 +1,5 @@
 import { drawTextCentered } from './hud.js';
+import { drawPanel, WELCOME, FAREWELL } from './panels.js';
 import { BASE_W, BASE_H } from '../config.js';
 
 // The only text the game shows beyond the HUD. No commentary, per the design:
@@ -36,10 +37,8 @@ export function drawScreens(renderer, game) {
 
   switch (game.state) {
     case 'title':
-      dim(0.5);
-      panel(PROMPT_Y - 3, 22);
-      promptLine('#ffffff');
-      drawTextCentered(renderer, `HIGH SCORE ${game.high}`, PROMPT_Y + 9, '#8899aa');
+      dim(0.62);
+      drawPanel(renderer, WELCOME, `HIGH SCORE ${game.high} - PRESS SPACE OR TAP`);
       break;
     case 'serve':
       panel(PROMPT_Y - 3, 11);
@@ -49,7 +48,8 @@ export function drawScreens(renderer, game) {
       result('GAME OVER');
       break;
     case 'win':
-      result('CLEARED');
+      dim(0.7);
+      drawPanel(renderer, FAREWELL, `SCORE ${game.score} - PRESS SPACE OR TAP`);
       break;
     case 'error':
       panel(BASE_H / 2 - 8, 22);

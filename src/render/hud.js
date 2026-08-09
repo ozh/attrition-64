@@ -61,32 +61,41 @@ export function glyph(char) {
   return FONT[String(char).toUpperCase()] ?? UNKNOWN;
 }
 
-export function textWidth(text) {
+export function textWidth(text, scale = 1) {
   if (!text.length) return 0;
-  return text.length * GLYPH_W + (text.length - 1) * SPACING;
+  return (text.length * GLYPH_W + (text.length - 1) * SPACING) * scale;
 }
 
-/** Draw text in backing-pixel coordinates. */
-export function drawText(renderer, text, x, y, color) {
+export const textHeight = (scale = 1) => GLYPH_H * scale;
+
+/**
+ * Draw text in backing-pixel coordinates.
+ *
+ * `scale` multiplies each glyph pixel into a square block, which keeps the
+ * result exactly as crisp as the rest of the canvas — the whole reason this
+ * font exists rather than a TrueType face. Used at 2 for panel headings.
+ */
+export function drawText(renderer, text, x, y, color, scale = 1) {
   const { ctx } = renderer;
   ctx.fillStyle = color;
   let cursor = Math.round(x);
+  const top = Math.round(y);
 
   for (const char of String(text)) {
     const rows = glyph(char);
     for (let row = 0; row < GLYPH_H; row++) {
       for (let col = 0; col < GLYPH_W; col++) {
         if (rows[row] & (1 << (GLYPH_W - 1 - col))) {
-          ctx.fillRect(cursor + col, Math.round(y) + row, 1, 1);
+          ctx.fillRect(cursor + col * scale, top + row * scale, scale, scale);
         }
       }
     }
-    cursor += GLYPH_W + SPACING;
+    cursor += (GLYPH_W + SPACING) * scale;
   }
 }
 
-export function drawTextCentered(renderer, text, y, color) {
-  drawText(renderer, text, Math.round((BASE_W - textWidth(text)) / 2), y, color);
+export function drawTextCentered(renderer, text, y, color, scale = 1) {
+  drawText(renderer, text, Math.round((BASE_W - textWidth(text, scale)) / 2), y, color, scale);
 }
 
 export function drawHud(renderer, { score, high, lives, title, muted }) {

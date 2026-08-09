@@ -382,6 +382,20 @@ TITLE ──Space──▶ SERVE ──Space──▶ PLAYING
 LIFE_LOST and LEVEL_CLEAR hold for a short beat before continuing, so the
 transition is readable.
 
+**Amended:** the title and win screens are panels of text rather than a single
+prompt line — the game's name, what a paddle and a block are, the controls, and
+on finishing an invitation to contribute. That widens "the only text is the HUD,
+GAME OVER and prompts", but the addition is instruction and invitation rather
+than commentary: nothing on those screens has an opinion about smoking, drinking
+or driving.
+
+Set in the same 3x5 bitmap font as the HUD, at 2x for headings. A TrueType face
+would be more legible, but the canvas is upscaled by an integer factor with
+smoothing off — antialiased text put through that comes out blurred, and drawing
+it outside the pipeline at device resolution looks like a different application
+pasted on top. The font's real cost is that it has no lowercase, so panel lines
+are kept short and blank lines do the paragraph breaks.
+
 The first level is loaded at construction so its art sits behind the TITLE
 screen, dimmed. Otherwise the title is a bare black rectangle and the game's only
 visual idea is hidden until the player commits to a run. Prompts are drawn on a
