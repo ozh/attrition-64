@@ -5,13 +5,13 @@ import { validateLevel, LevelValidationError } from './validate.js';
  */
 export const LEVEL_FILES = [
   'smoke-break.js',
-  'take-away.js',
-  'the-commute.js',
-  'business-as-usual.js',
-  'sick-day.js',
   'we-are-friends.js',
-  'screen-time.js',
+  'the-commute.js',
+  'take-away.js',
+  'sick-day.js',
   'no-mistake.js',
+  'screen-time.js',
+  'business-as-usual.js',
   'sla-ukr.js',
 ];
 
