@@ -1,66 +1,53 @@
 # ATTRITION 64
 
-A pixel breakout game where the paddle is an everyday item and the blocks form
-the silhouette of something that item is a threat to.
+<img src="assets/images/attrition64.jpg">
 
-| Level | Paddle | Blocks |
-| --- | --- | --- |
-| `SMOKE BREAK` | cigarette | lungs |
-| `HAPPY HOUR` | beer bottle | liver |
-| `SCREEN TIME` | phone | brain |
-| `THE COMMUTE` | car | the Earth |
-| `TAKEAWAY` | burger | intestines |
-| `MAKE NO MISTAKE` | Claude Code | ocean and fish |
+> *Attrition : the process of gradually reducing the strength or effectiveness of someone or
+> something through sustained attack or pressure.*
 
-The game makes no argument about any of it. There is no commentary and no
-message screen — the sprites are the whole idea, and the level titles name the
-ordinary activity rather than its consequence.
+**ATTRITION 64** is a pixel breakout game where the paddle is an everyday item, and the blocks form
+the silhouette of something that the item is a threat to.  
 
-New pairings are welcome as pull requests. Adding one is a single new file in
-`src/levels/data/` plus one line in a registry: see
-[docs/ADDING_A_LEVEL.md](docs/ADDING_A_LEVEL.md).
+**ATTRITION 64** gives an old school perspective on modern(ish) issues. The game makes no argument about
+any of it. The sprites are the whole idea, feel free to adhere or not.
+
+## Inspiration
+
+There is this famous [anti smoking ad](https://www.reddit.com/r/interestingasfuck/comments/g9013u/antismoking_poster/)
+that shows a cigarette as a paddle in a breakout game, with the blocks forming the silhouette of a
+pair of lungs. One day I thought that this would make a fun game and started thinking
+about what other pairings could be made.
 
 ## Playing
 
-| Action | Keyboard | Mouse | Touch |
-| --- | --- | --- | --- |
-| Move the paddle | ← → or A D | move | drag |
-| Serve, release a held ball, fire the laser | Space | click | tap |
-| Mute | M | — | — |
+This is your regular breakout game: a paddle, blocks to destroy, a ball that bounces around and
+power ups that drop from destroyed blocks. Several levels, playable on smartphone, desktop, with
+finger, mouse or keyboard.
 
-Three lives. A life is lost only when the *last* ball drains, so multiball is a
-real safety net. Damage to the blocks persists when you die — dying never undoes
-progress.
-
-**The ball speeds up the longer a life lasts** — about +2% every fifteen seconds,
-compounding, capped at double. Taking your time is the thing that kills you. The
-clock resets when you lose a life and when you reach a new level, so three lives
-are three attempts rather than three goes at the same one.
-
-Blocks drop eight kinds of pickup, colour-coded so you can see what is coming:
-multiball, wide paddle, slow ball, fast ball (which also doubles your score
-while active), sticky paddle, lasers, a piercing ball that ploughs straight
-through blocks instead of bouncing, and a shield — a one-shot floor that saves a
-single ball, drawn across the bottom of the playfield while you hold it.
-
-Once a level is nearly clear the last blocks are scattered and slow to find, so
-the game starts dropping powerups on a timer that tightens as the grid empties.
+Play with it: https://ozh.github.io/attrition-64/
 
 ## Running it
 
-The game is static files loaded as ES modules, so it must be served over HTTP.
-Opening `index.html` from `file://` will not work — browsers block module loading
-over that scheme.
-
-Any static server will do. From the project root:
+The game is static files loaded as ES modules, so it must be served over HTTP - opening
+`index.html` from `file://` will not work. Any static server will do.  
+Example, from the project root:
 
 ```sh
 python3 -m http.server 8000     # then open http://localhost:8000/
 ```
 
-Every path in the project is relative, so the same files work unchanged whether
-they are served from the root or from a subdirectory such as GitHub Pages'
-`/<repo>/`.
+## Contributing
+
+Pull requests are welcome!
+
+If you want to add a level, read [docs/ADDING_A_LEVEL.md](docs/ADDING_A_LEVEL.md). Pull requests are welcome!
+
+There is an editing tool: `tools/preview.html`. Load it through the same local server — for example
+`http://localhost:8000/tools/preview.html`. Paste a level file into the textarea and
+it renders as you type.
+
+If you want to change something and want to know why it is that way, [docs/DESIGN.md](docs/DESIGN.md)
+is the place to look.
 
 ## Tests
 
@@ -70,89 +57,10 @@ No dependencies and no test framework — Node's built-in runner, Node 18 or new
 node --test 'test/*.test.js'
 ```
 
-168 tests cover the engine, the level validator, the screen-fit calculation and
-the storage wrapper. Rendering, audio and touch input are verified by playing the
-game; everything they depend on is pure and tested.
+# License and AI usage
 
-## Sound
+This is free software, under the MIT license.
 
-Ten square-wave and noise blips live in `assets/sfx/`, generated by:
-
-```sh
-node tools/gen-sfx.mjs
-```
-
-Edit the synthesis in that file and re-run to retune them, or just drop your own
-recordings over the top — the game only cares about the filenames:
-
-```
-bounce-wall  bounce-paddle  block-hit  block-break  explode
-powerup-catch  laser  shield-save  life-lost  level-clear  game-over
-```
-
-A missing file is not an error. It is logged once at debug level and that effect
-stays silent, so you can delete any of them without breaking anything.
-
-## Previewing a level
-
-Open `tools/preview.html` through the same local server — for example
-`http://localhost:8000/tools/preview.html`.
-
-Paste a level file into the textarea and it renders as you type, then reports
-the things you cannot see by looking: validation status, filled cell count,
-estimated hits to clear against the allowed range, trimmed paddle size, and a
-breakdown of every block type and every paddle pixel colour.
-
-The level does not need to be registered — the tool evaluates whatever is in the
-box, so you can iterate on a new pairing before touching `src/levels/`. Invalid
-levels still render, with the validator's message alongside, which is usually
-how you work out what it is complaining about.
-
-It opens pre-filled with the shipped cigarette/lungs level as a worked example.
-
-## Icons and the share image
-
-The favicon, the home-screen icons and the 1200×630 image that Facebook and
-Twitter show when the link is shared are all derived from one square screenshot
-of level one:
-
-```sh
-python3 tools/gen-icons.py [source.jpg]
-```
-
-**One thing needs editing before the site goes live.** `og:image` and `og:url`
-in `index.html` must be *absolute* URLs — social crawlers will not resolve a
-relative path — so they carry a hardcoded host. Everything else in the project
-is relative. If the host or repository name is wrong there, the link simply
-shows no preview, with nothing to indicate why.
-
-## Layout
-
-```
-index.html            page shell, favicon and share-preview metadata
-manifest.webmanifest  home-screen name, icons and colours
-src/config.js         every tunable constant
-src/game.js           run lifecycle: states, lives, level progression
-src/simulation.js     one frame of play: balls, destruction, drops, shots
-src/engine/           DOM-free game logic, unit-tested
-src/render/           canvas drawing
-src/levels/           the registry and the validator
-src/levels/data/      one module per level, named after its title
-tools/preview.html    level previewer
-tools/gen-shapes.mjs  regenerates the shipped level art
-tools/gen-sfx.mjs     regenerates the sound effects
-tools/gen-icons.py    regenerates the favicons and the share image
-assets/icons/         favicon, home-screen icons, og-image.png
-test/                 node --test suites
-docs/DESIGN.md        why the game is built the way it is
-docs/ADDING_A_LEVEL.md  the level format, in detail
-```
-
-`src/engine/` never touches the DOM. That is what lets the interesting logic —
-collision, explosions, effect timers — be tested under Node without a browser.
-
-If you are about to change something and want to know why it is that way,
-[docs/DESIGN.md](docs/DESIGN.md) is the place to look. It records the reasoning
-behind the decisions that are not obvious from the code — why explosions do not
-chain on bulk blocks, why the upscale factor is computed in device pixels, why
-levels are character grids rather than images.
+I used Claude Code to help with several parts of the code: maths, tests, level validation and
+base design. Feel free to copy any of the code here. I hope you will enjoy the level that
+references this ;)
