@@ -8,7 +8,7 @@ import { timeSpeedFactor } from './engine/speed.js';
 import * as C from './config.js';
 
 export const NEUTRAL_INTENT = {
-  moveDir: 0, pointerCenter: null, dragDelta: 0, action: false, mute: false,
+  moveDir: 0, dragDelta: 0, action: false, mute: false,
 };
 
 /**
@@ -141,7 +141,6 @@ export function createGame({ levels, storage, audio, random = Math.random }) {
 
   function steer(intent, dt) {
     if (intent.moveDir) movePaddle(game.paddle, intent.moveDir, dt);
-    if (intent.pointerCenter !== null) setPaddleCenter(game.paddle, intent.pointerCenter);
     if (intent.dragDelta) {
       setPaddleCenter(game.paddle, game.paddle.x + paddleBox(game.paddle).w / 2 + intent.dragDelta);
     }

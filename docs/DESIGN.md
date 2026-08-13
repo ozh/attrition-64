@@ -243,17 +243,15 @@ Space key releases a stuck ball if one is held, fires the laser if the laser is 
 ## Input
 
 - **Keyboard:** Left/Right or A/D move; Space serves, releases, and fires; M mutes.
-- **Mouse:** the paddle centre follows the cursor's X position; click acts.
-- **Touch:** drag to move, tap to serve/release/fire.
-
-`input.js` translates all three into one intent object (`{ moveDir, pointerX,
-actionPressed, mutePressed }`) that `game.js` consumes, so the engine never knows
-which device produced an input.
+- **Mouse:** the paddle moves by however far the cursor moves, anywhere on the
+  page; a click anywhere on the page acts. The cursor itself is hidden while the
+  paddle is under the player's control, since the paddle is the pointer then.
+- **Touch:** drag to move, tap to serve/release/fire — anywhere on the page, not
+  only over the canvas. Touches that land on a link are left to the browser.
 
 **Every keyboard action has a pointer equivalent**, which is what keeps the game
 whole on a phone: Space's three jobs (serve, release a stuck ball, fire the
-laser) are all reachable by tapping, and mute is a tappable HUD icon rather than
-only the M key.
+laser) are all reachable by tapping.
 
 ## Mobile
 

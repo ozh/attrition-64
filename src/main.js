@@ -30,9 +30,6 @@ renderer.fit();
 window.addEventListener('resize', () => renderer.fit());
 window.addEventListener('orientationchange', () => renderer.fit());
 
-// Hide the pointer only while the paddle is under the player's control. The
-// hold states are included so the cursor does not blink back for a second
-// between losing a life and serving again.
 // The page behind the canvas, tinted from the level's own background so the
 // playfield always has a visible edge. Only written when the level changes.
 let surround = null;
@@ -53,6 +50,9 @@ function updateSurround() {
   document.body.style.background = wanted;
 }
 
+// Hide the pointer only while the paddle is under the player's control. The
+// hold states are included so the cursor does not blink back for a second
+// between losing a life and serving again.
 const CURSOR_HIDDEN_STATES = new Set(['serve', 'playing', 'lifeLost', 'levelClear']);
 let cursorHidden = null;
 
@@ -60,7 +60,8 @@ function updateCursor() {
   const hide = CURSOR_HIDDEN_STATES.has(game.state);
   if (hide === cursorHidden) return;      // avoid touching the DOM every frame
   cursorHidden = hide;
-  canvas.classList.toggle('hide-cursor', hide);
+  // On the document, not the canvas: the mouse steers from the whole page now.
+  document.documentElement.classList.toggle('hide-cursor', hide);
 }
 
 // --- debug read-out --------------------------------------------------------

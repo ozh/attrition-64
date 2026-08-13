@@ -11,9 +11,10 @@ export function clientXToCell(clientX, rect) {
 
 export function createInput(canvas, win = window) {
   const held = new Set();
-  const state = { pointerCenter: null, dragDelta: 0, action: false, mute: false };
+  const state = { dragDelta: 0, action: false, mute: false };
   let dragging = false;
   let lastDragCell = 0;
+  let lastMouseCell = null;
 
   const onKeyDown = (event) => {
     if (event.repeat) return;
@@ -26,12 +27,31 @@ export function createInput(canvas, win = window) {
   };
   const onKeyUp = (event) => held.delete(event.code);
 
+  /**
+   * Relative like touch, and listened for on the window rather than the canvas,
+   * so the mouse steers from anywhere on the page. An absolute position cannot:
+   * once the cursor is past the canvas edge it maps off the end of the field and
+   * the paddle stays pinned to that wall however far the mouse then travels.
+   * The movement is still canvas-scaled, so it stays 1:1 with the cursor.
+   */
   const onMouseMove = (event) => {
-    state.pointerCenter = clientXToCell(event.clientX, canvas.getBoundingClientRect());
+    const cell = clientXToCell(event.clientX, canvas.getBoundingClientRect());
+    if (lastMouseCell !== null) state.dragDelta += cell - lastMouseCell;
+    lastMouseCell = cell;
   };
+  /** Left the window (no relatedTarget): forget where the cursor was, so coming
+   *  back in on the far side is not one enormous jump. */
+  const onMouseOut = (event) => { if (!event.relatedTarget) lastMouseCell = null; };
   const onMouseDown = () => { state.action = true; };
 
+  /**
+   * A drag starts anywhere on the page, not just on the canvas, to match the
+   * mouse. Links are the one exception: swallowing the touch there would also
+   * swallow the click the browser synthesises from it, leaving the credit links
+   * untappable on a phone.
+   */
   const onTouchStart = (event) => {
+    if (event.target?.closest?.('a')) return;
     dragging = true;
     lastDragCell = clientXToCell(event.touches[0].clientX, canvas.getBoundingClientRect());
     state.action = true;
@@ -49,12 +69,16 @@ export function createInput(canvas, win = window) {
 
   win.addEventListener('keydown', onKeyDown);
   win.addEventListener('keyup', onKeyUp);
-  canvas.addEventListener('mousemove', onMouseMove);
-  canvas.addEventListener('mousedown', onMouseDown);
-  canvas.addEventListener('touchstart', onTouchStart, { passive: false });
-  canvas.addEventListener('touchmove', onTouchMove, { passive: false });
-  canvas.addEventListener('touchend', onTouchEnd);
-  canvas.addEventListener('touchcancel', onTouchEnd);
+  win.addEventListener('mousemove', onMouseMove);
+  win.addEventListener('mouseout', onMouseOut);
+  // On the window like the movement: with the cursor hidden and steering from
+  // anywhere, "click to serve" has to work anywhere too, or the player has to
+  // find a canvas they can no longer see the cursor over.
+  win.addEventListener('mousedown', onMouseDown);
+  win.addEventListener('touchstart', onTouchStart, { passive: false });
+  win.addEventListener('touchmove', onTouchMove, { passive: false });
+  win.addEventListener('touchend', onTouchEnd);
+  win.addEventListener('touchcancel', onTouchEnd);
 
   return {
     /** Reading consumes the edge-triggered presses, so one tap is one action. */
@@ -66,12 +90,10 @@ export function createInput(canvas, win = window) {
       }
       const intent = {
         moveDir: Math.sign(moveDir),
-        pointerCenter: state.pointerCenter,
         dragDelta: state.dragDelta,
         action: state.action,
         mute: state.mute,
       };
-      state.pointerCenter = null;
       state.dragDelta = 0;
       state.action = false;
       state.mute = false;
@@ -80,12 +102,13 @@ export function createInput(canvas, win = window) {
     dispose() {
       win.removeEventListener('keydown', onKeyDown);
       win.removeEventListener('keyup', onKeyUp);
-      canvas.removeEventListener('mousemove', onMouseMove);
-      canvas.removeEventListener('mousedown', onMouseDown);
-      canvas.removeEventListener('touchstart', onTouchStart);
-      canvas.removeEventListener('touchmove', onTouchMove);
-      canvas.removeEventListener('touchend', onTouchEnd);
-      canvas.removeEventListener('touchcancel', onTouchEnd);
+      win.removeEventListener('mousemove', onMouseMove);
+      win.removeEventListener('mouseout', onMouseOut);
+      win.removeEventListener('mousedown', onMouseDown);
+      win.removeEventListener('touchstart', onTouchStart);
+      win.removeEventListener('touchmove', onTouchMove);
+      win.removeEventListener('touchend', onTouchEnd);
+      win.removeEventListener('touchcancel', onTouchEnd);
     },
   };
 }
