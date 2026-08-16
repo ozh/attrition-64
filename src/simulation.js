@@ -39,7 +39,7 @@ export function createSimulation({
 
     const kind = C.POWERUP_KINDS[Math.floor(random() * C.POWERUP_KINDS.length)];
     const x = random() * (C.FIELD_W - C.DROP_SIZE);
-    game.drops.push(createDrop(kind, x, C.CEILING));
+    game.drops.push(createDrop(kind, x, C.CEILING, random));
     game.flashes.push({ x, kind, remaining: C.RELIEF_FLASH_SECONDS });
   }
 
@@ -170,7 +170,7 @@ export function createSimulation({
 
   function maybeDrop(hit) {
     const kind = rollPowerup(hit.spec);
-    if (kind) game.drops.push(createDrop(kind, hit.px, hit.py));
+    if (kind) game.drops.push(createDrop(kind, hit.px, hit.py, random));
   }
 
   function stepPowerups(dt) {

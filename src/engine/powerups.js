@@ -1,5 +1,5 @@
 import { paddleBox } from './paddle.js';
-import { POWERUP_KINDS, DROP_SPEED, DROP_SIZE, DRAIN_ROW } from '../config.js';
+import { POWERUP_KINDS, DROP_SPEED, DROP_SPEED_JITTER, DROP_SIZE, DRAIN_ROW } from '../config.js';
 
 /**
  * Decide whether a destroyed block drops something.
@@ -14,8 +14,13 @@ export function rollPowerup(spec, rng = Math.random) {
   return kinds[Math.min(kinds.length - 1, Math.floor(rng() * kinds.length))];
 }
 
-export function createDrop(kind, px, py) {
-  return { kind, x: px, y: py };
+/** Uniform over DROP_SPEED ±DROP_SPEED_JITTER, so two drops spawned together visibly separate as they fall. */
+export function rollDropSpeed(rng = Math.random) {
+  return DROP_SPEED * (1 + DROP_SPEED_JITTER * (rng() * 2 - 1));
+}
+
+export function createDrop(kind, px, py, rng = Math.random) {
+  return { kind, x: px, y: py, vy: rollDropSpeed(rng) };
 }
 
 /** Advance every drop, collecting those the paddle caught and discarding those that fell past it. */
@@ -25,7 +30,7 @@ export function stepDrops(drops, dt, paddle) {
   const caught = [];
 
   for (const drop of drops) {
-    drop.y += DROP_SPEED * dt;
+    drop.y += drop.vy * dt;
     if (overlaps(drop, box)) {
       caught.push(drop.kind);
       continue;

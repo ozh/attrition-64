@@ -4,6 +4,7 @@ import { createGame, NEUTRAL_INTENT } from '../src/game.js';
 import { createStorage } from '../src/storage.js';
 import { isCleared } from '../src/engine/grid.js';
 import { paddleBox } from '../src/engine/paddle.js';
+import { createDrop } from '../src/engine/powerups.js';
 import { timeSpeedFactor } from '../src/engine/speed.js';
 import {
   LIVES, DRAIN_ROW, LIFE_LOST_HOLD, STEP, ENDGAME_RELIEF, POWERUP_KINDS,
@@ -33,7 +34,7 @@ const press = { ...NEUTRAL_INTENT, action: true };
 /** Grant a powerup the way catching one would: drop it onto the paddle. */
 function applyEffectForTest(g, kind) {
   const box = { x: g.paddle.x, y: 98 - g.paddle.h };
-  g.drops.push({ kind, x: box.x + 1, y: box.y - 0.1 });
+  g.drops.push(createDrop(kind, box.x + 1, box.y - 0.1));
   g.update(STEP, NEUTRAL_INTENT);
 }
 const game = (levels = [testLevel()]) => createGame({ levels, storage: memoryStorage(), audio: silentAudio });

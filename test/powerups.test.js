@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { rollPowerup, createDrop, stepDrops } from '../src/engine/powerups.js';
 import { createPaddle, paddleBox } from '../src/engine/paddle.js';
-import { DROP_SPEED, DRAIN_ROW, POWERUP_KINDS } from '../src/config.js';
+import { DROP_SPEED, DROP_SPEED_JITTER, DRAIN_ROW, POWERUP_KINDS } from '../src/config.js';
 
 const paddle = () => createPaddle({ paddle: { colors: { W: '#fff' }, grid: ['WWWWWWWWWWWWWWWW'] } });
 /** Deterministic rng: returns the queued values in order. */
@@ -35,9 +35,24 @@ test('a bare chance picks from the full pool', () => {
 });
 
 test('drops fall at the configured speed', () => {
-  const d = createDrop('laser', 10, 20);
+  const d = createDrop('laser', 10, 20, rng(0.5));   // 0.5 is the middle of the jitter range
   const { drops } = stepDrops([d], 0.5, paddle());
   assert.ok(Math.abs(drops[0].y - (20 + DROP_SPEED * 0.5)) < 1e-9);
+});
+
+test('each drop rolls its own fall speed', () => {
+  const slow = createDrop('laser', 10, 20, rng(0));
+  const fast = createDrop('laser', 10, 20, rng(1));
+  assert.ok(slow.vy < DROP_SPEED, 'the bottom of the range is slower than the mean');
+  assert.ok(fast.vy > DROP_SPEED, 'the top of the range is faster than the mean');
+  assert.ok(Math.abs(slow.vy - DROP_SPEED * (1 - DROP_SPEED_JITTER)) < 1e-9);
+  assert.ok(Math.abs(fast.vy - DROP_SPEED * (1 + DROP_SPEED_JITTER)) < 1e-9);
+});
+
+test('drops sharing a spawn separate as they fall', () => {
+  const both = [createDrop('laser', 10, 20, rng(0)), createDrop('sticky', 30, 20, rng(1))];
+  const { drops } = stepDrops(both, 1, paddle());
+  assert.ok(drops[1].y > drops[0].y, 'the faster drop is lower after a second');
 });
 
 test('a drop reaching the paddle is caught and removed', () => {

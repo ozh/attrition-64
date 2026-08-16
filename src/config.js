@@ -53,7 +53,9 @@ export const POWERUP_KINDS = [
 ];
 // Kinds that fire once instead of running on a timer, so they carry no duration.
 export const INSTANT_POWERUPS = ['multiball', 'shield', 'piercing'];
-export const DROP_SPEED = 20;          // cells per second
+// Each drop rolls its own fall speed at spawn, uniform over DROP_SPEED ±JITTER.
+export const DROP_SPEED = 20;          // cells per second, mean
+export const DROP_SPEED_JITTER = 0.3;  // ±30% → 14-26 cells per second
 export const DROP_SIZE = 1;
 export const EFFECT_DURATION = { widePaddle: 15, slowBall: 12, fastBall: 12, sticky: 12, laser: 12 };
 // Piercing lasts one round trip — up, and back down to the paddle — rather than a number of seconds

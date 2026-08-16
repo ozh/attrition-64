@@ -223,6 +223,8 @@ chance. A hit spawns a falling 3×3 pickup at that cell, colour-coded by kind so
 the player can choose whether to catch it. It is caught when it overlaps the
 paddle's bounding box and despawns below the drain line.
 
+Each pickup rolls its own fall speed at spawn, uniform over `DROP_SPEED` ±30%.
+
 | Kind         | Effect                                                                                                                                                                                                                                         |
 |--------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `multiball`  | Instant. Each active ball splits into 3, spread ±25°, up to a hard cap of 9 balls in play.                                                                                                                                                     |
