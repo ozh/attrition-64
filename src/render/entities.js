@@ -1,8 +1,9 @@
 import { charAt } from '../engine/sprite.js';
 import { paddleBox } from '../engine/paddle.js';
 import {
-  CELL, BLOCK_PX, BALL_SIZE, DROP_SIZE, CEILING, FIELD_W, SHIELD_ROW,
+  CELL, BLOCK_PX, BALL_SIZE, DROP_SIZE, CEILING, FIELD_W, BASE_H, SHIELD_ROW,
   RELIEF_FLASH_SECONDS, RELIEF_FLASH_WIDTH,
+  BLINKING_POWERUPS, DROP_BLINK_PERIOD, DROP_BLINK_DIM,
 } from '../config.js';
 
 const DROP_COLORS = {
@@ -16,6 +17,10 @@ const DROP_COLORS = {
   // only thing telling drops apart is colour, so the gaps matter.
   piercing: '#8bff3d',
   shield: '#b9f2ff',
+  // The ninth kind, and the hues are gone. White plus a blink is the new channel.
+  // A genuine unknown-kind bug still renders as a *steady* white drop below, so
+  // adding this does not mask that case.
+  wrap: '#ffffff',
 };
 
 /**
@@ -54,12 +59,20 @@ export function drawBalls(renderer, balls, color) {
 export function drawDrops(renderer, drops) {
   const { ctx } = renderer;
   for (const drop of drops) {
+    ctx.globalAlpha = blinkingDim(drop) ? DROP_BLINK_DIM : 1;
     ctx.fillStyle = DROP_COLORS[drop.kind] ?? '#ffffff';
     ctx.fillRect(
       Math.round(drop.x * CELL), Math.round(drop.y * CELL),
       DROP_SIZE * CELL - 1, DROP_SIZE * CELL - 1,
     );
   }
+  ctx.globalAlpha = 1;
+}
+
+/** True on the dim half of the blink cycle, for the kinds that use that channel. */
+function blinkingDim(drop) {
+  if (!BLINKING_POWERUPS.includes(drop.kind)) return false;
+  return Math.floor((drop.age ?? 0) / DROP_BLINK_PERIOD) % 2 === 1;
 }
 
 export function drawShots(renderer, shots) {
@@ -102,6 +115,28 @@ export function drawShield(renderer, active) {
   for (let x = 0; x < FIELD_W; x += 2) {
     ctx.fillRect(x * CELL, SHIELD_ROW * CELL, CELL, 2);
   }
+}
+
+/**
+ * The side walls, tinted while wrap is active.
+ *
+ * Wrap has a legibility gap the other effects do not: every one of them
+ * announces itself (the ball recolours, the shield draws its floor, the paddle
+ * is visibly wider, slow/fast/sticky/laser show on the first bounce), but
+ * between catching wrap and the first wall contact nothing would have changed
+ * on screen. Drawn on the field for the same reason as the shield: it is a
+ * thing in the world, shown where it acts, so it needs no legend.
+ *
+ * Steady, not blinking. Blink is the drop's channel for telling kinds apart;
+ * a pulsing border would only be noise.
+ */
+export function drawWrapEdges(renderer, active) {
+  if (!active) return;
+  const { ctx } = renderer;
+  ctx.fillStyle = DROP_COLORS.wrap;
+  const top = CEILING * CELL;
+  ctx.fillRect(0, top, 1, BASE_H - top);
+  ctx.fillRect(FIELD_W * CELL - 1, top, 1, BASE_H - top);
 }
 
 export { DROP_COLORS };

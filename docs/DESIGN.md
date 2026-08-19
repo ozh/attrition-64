@@ -219,7 +219,8 @@ the arithmetic: *hits ≈ filled cells ÷ (2·radius+1)²*.
 ## Powerups
 
 A block destroyed by any means — ball, laser, or explosion — rolls its `powerup`
-chance. A hit spawns a falling 3×3 pickup at that cell, colour-coded by kind so
+chance. A hit spawns a falling 3×3 pickup at that cell, colour-coded and possibly
+blinking (so each powerup is recognizable even with limited color palette) so
 the player can choose whether to catch it. It is caught when it overlaps the
 paddle's bounding box and despawns below the drain line.
 
@@ -235,6 +236,7 @@ Each pickup rolls its own fall speed at spawn, uniform over `DROP_SPEED` ±30%.
 | `laser`      | 12 s. Space fires upward, 0.3 s cooldown; a shot deals one point of damage to the first block it meets, then despawns.                                                                                                                         |
 | `piercing`   | Instant. The ball stops bouncing off destructible blocks and ploughs through, damaging everything it crosses. Indestructible blocks still turn it back, or a level built with walls would leak balls into places its author never planned for. |
 | `shield`     | Held, not timed. A one-shot floor at row 99 that bounces a single draining ball and is then spent. Drawn across the playfield while held, so it needs no HUD legend: it is a thing in the world, shown where it acts.                          |
+| `wrap`       | 6 s. The ball leaves through a side wall and reappears on the opposite one, keeping its heading, instead of bouncing. The ceiling still reflects, or a ball emerging at the bottom would be at the drain row. Refused when the far column is occupied. Both side edges are tinted while active. |
 
 Timers **refresh** rather than stack — catching a second `widePaddle` restarts
 its 15 s instead of granting 30. `slowBall` and `fastBall` are mutually
@@ -305,6 +307,7 @@ The documented filenames:
 | File                  | Trigger                                  |
 | --------------------- | ---------------------------------------- |
 | `bounce-wall.wav`     | Ball hits a wall or ceiling              |
+| `wrap.wav`            | Ball wraps through a side wall           |
 | `bounce-paddle.wav`   | Ball hits the paddle                     |
 | `block-hit.wav`       | Block damaged but not destroyed          |
 | `block-break.wav`     | Block destroyed                          |
@@ -314,6 +317,7 @@ The documented filenames:
 | `life-lost.wav`       | Last ball drains                         |
 | `level-clear.wav`     | Grid cleared                             |
 | `game-over.wav`       | Lives exhausted                          |
+| `shield-save.wav`     | Shield saves a draining ball             |
 
 Two implementation details drive the design. Browsers block audio until a user
 gesture — the TITLE screen already requires a tap or Space to start, so that

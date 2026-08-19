@@ -9,6 +9,13 @@ const world = (blocked = new Set(), sink = {}) => ({
   onWall: () => { sink.walls = (sink.walls ?? 0) + 1; },
 });
 
+/** The same world with the wrap powerup active. */
+const wrapping = (blocked = new Set(), sink = {}) => ({
+  ...world(blocked, sink),
+  wrap: true,
+  onWrap: () => { sink.wraps = (sink.wraps ?? 0) + 1; },
+});
+
 test('a ball created straight up travels upward at its speed', () => {
   const b = createBall(30, 50, 40, 0);
   assert.ok(Math.abs(b.vx) < 1e-9);
@@ -118,5 +125,71 @@ test('onOverlap is optional and costs nothing when absent', () => {
   const b = createBall(30, 50, 40, 0);
   assert.doesNotThrow(() => stepBall(b, 0.1, {
     isBlocked: () => false, onHitCell: () => {}, onWall: () => {},
+  }));
+});
+
+test('wrapping carries a ball off the left wall to the right side', () => {
+  const sink = {};
+  const b = createBall(0.2, 50, 40, -Math.PI / 2);
+  stepBall(b, 0.05, wrapping(new Set(), sink));
+  assert.ok(b.x > FIELD_W / 2, `emerged on the far side, got x=${b.x}`);
+  assert.ok(b.vx < 0, 'still travelling left');
+  assert.equal(sink.wraps, 1);
+});
+
+test('wrapping carries a ball off the right wall to the left side', () => {
+  const sink = {};
+  const b = createBall(FIELD_W - BALL_SIZE - 0.2, 50, 40, Math.PI / 2);
+  stepBall(b, 0.05, wrapping(new Set(), sink));
+  assert.ok(b.x < FIELD_W / 2, `emerged on the far side, got x=${b.x}`);
+  assert.ok(b.vx > 0, 'still travelling right');
+  assert.equal(sink.wraps, 1);
+});
+
+test('a wrap is not a bounce and reports no wall hit', () => {
+  const sink = {};
+  const b = createBall(0.2, 50, 40, -Math.PI / 2);
+  stepBall(b, 0.05, wrapping(new Set(), sink));
+  assert.equal(sink.walls, undefined, 'nothing bounced, so bounce-wall must not fire');
+});
+
+test('speed is preserved through a wrap', () => {
+  const b = createBall(0.2, 50, 40, -Math.PI / 2);
+  stepBall(b, 0.05, wrapping());
+  assert.ok(Math.abs(ballSpeed(b) - 40) < 1e-6);
+});
+
+test('without the wrap flag the side walls still reflect', () => {
+  const b = createBall(0.2, 50, 40, -Math.PI / 2);
+  stepBall(b, 0.05, { ...world(), wrap: false });
+  assert.ok(b.x >= 0);
+  assert.ok(b.vx > 0, 'reflected');
+});
+
+test('the ceiling clamps even while wrapping', () => {
+  // A ceiling wrap would drop the ball at the drain row and cost a life.
+  const sink = {};
+  const b = createBall(30, CEILING + 0.2, 40, 0);
+  stepBall(b, 0.05, wrapping(new Set(), sink));
+  assert.ok(b.y >= CEILING, 'never enters the HUD band');
+  assert.ok(b.vy > 0, 'reflected downward');
+  assert.equal(sink.wraps, undefined);
+});
+
+test('a ball does not wrap into a blocked far column, and reflects instead', () => {
+  // Teleporting past the swept resolution would leave the ball inside the block.
+  const sink = {};
+  const b = createBall(0.2, 50, 40, -Math.PI / 2);
+  stepBall(b, 0.05, wrapping(new Set([`${FIELD_W - BALL_SIZE},50`]), sink));
+  assert.ok(b.x >= 0, `stayed in the field, got x=${b.x}`);
+  assert.ok(b.vx > 0, 'reflected off the near wall');
+  assert.equal(sink.wraps, undefined, 'the wrap was refused');
+  assert.ok(sink.walls >= 1, 'and reported as an ordinary wall hit');
+});
+
+test('onWrap is optional and costs nothing when absent', () => {
+  const b = createBall(0.2, 50, 40, -Math.PI / 2);
+  assert.doesNotThrow(() => stepBall(b, 0.05, {
+    isBlocked: () => false, onHitCell: () => {}, onWall: () => {}, wrap: true,
   }));
 });

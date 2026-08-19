@@ -86,6 +86,9 @@ export function createSimulation({
       onHitCell: hitCell,
       onOverlap: piercing ? hitCell : undefined,
       onWall: () => audio.play('bounce-wall'),
+      // A wrap is not a bounce, so bounce-wall would be a lie.
+      wrap: hasEffect(game.effects, 'wrap'),
+      onWrap: () => audio.play('wrap'),
     };
   }
 

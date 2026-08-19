@@ -19,8 +19,9 @@ export function rollDropSpeed(rng = Math.random) {
   return DROP_SPEED * (1 + DROP_SPEED_JITTER * (rng() * 2 - 1));
 }
 
+/** `age` is the clock the renderer blinks against; kept here so it stays testable. */
 export function createDrop(kind, px, py, rng = Math.random) {
-  return { kind, x: px, y: py, vy: rollDropSpeed(rng) };
+  return { kind, x: px, y: py, vy: rollDropSpeed(rng), age: 0 };
 }
 
 /** Advance every drop, collecting those the paddle caught and discarding those that fell past it. */
@@ -31,6 +32,7 @@ export function stepDrops(drops, dt, paddle) {
 
   for (const drop of drops) {
     drop.y += drop.vy * dt;
+    drop.age += dt;
     if (overlaps(drop, box)) {
       caught.push(drop.kind);
       continue;

@@ -50,6 +50,7 @@ export const LEVEL_CLEAR_HOLD = 1.5;   // seconds
 // Powerups
 export const POWERUP_KINDS = [
   'multiball', 'widePaddle', 'slowBall', 'fastBall', 'sticky', 'laser', 'piercing', 'shield',
+  'wrap',
 ];
 // Kinds that fire once instead of running on a timer, so they carry no duration.
 export const INSTANT_POWERUPS = ['multiball', 'shield', 'piercing'];
@@ -57,7 +58,17 @@ export const INSTANT_POWERUPS = ['multiball', 'shield', 'piercing'];
 export const DROP_SPEED = 20;          // cells per second, mean
 export const DROP_SPEED_JITTER = 0.3;  // ±30% → 14-26 cells per second
 export const DROP_SIZE = 1;
-export const EFFECT_DURATION = { widePaddle: 15, slowBall: 12, fastBall: 12, sticky: 12, laser: 12 };
+// wrap is short on purpose. It is also what makes it reliable: at BALL_SPEED the ball covers ~300 cells
+// in 6s inside a 64-wide field, so it always meets a side wall and the player always sees it fire.
+export const EFFECT_DURATION = {
+  widePaddle: 15, slowBall: 12, fastBall: 12, sticky: 12, laser: 12, wrap: 6,
+};
+// All eight hues are claimed, so blink is the second identity channel: colour still names the kind,
+// blink says which half of the roster it is in. Kinds 9-16 blink and re-use the first eight hues.
+export const BLINKING_POWERUPS = ['wrap'];
+export const DROP_BLINK_PERIOD = 0.15;   // seconds per phase
+// Dimmed, never invisible: a drop that vanishes for 150ms at a time is materially harder to catch.
+export const DROP_BLINK_DIM = 0.35;      // alpha of the dim phase
 // Piercing lasts one round trip — up, and back down to the paddle — rather than a number of seconds
 export const WIDE_PADDLE_SCALE = 1.5;
 export const SLOW_BALL_MUL = 0.7;
@@ -101,7 +112,7 @@ export const KEY_MUTED = 'muted';
 export const SFX_PATH = 'assets/sfx/';
 export const SFX_NAMES = [
   'bounce-wall', 'bounce-paddle', 'block-hit', 'block-break', 'explode',
-  'powerup-catch', 'laser', 'life-lost', 'level-clear', 'game-over', 'shield-save',
+  'powerup-catch', 'laser', 'life-lost', 'level-clear', 'game-over', 'shield-save', 'wrap',
 ];
 export const SFX_POOL_SIZE = 4;
 export const SFX_RETRIGGER_MS = 12;    // collapses a mass break into one sound

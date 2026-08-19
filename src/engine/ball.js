@@ -64,19 +64,42 @@ function substep(ball, dt, world) {
   bounceWalls(ball, world);
 }
 
+/**
+ * The side walls, and the ceiling, which never wraps: a ball emerging at the
+ * bottom would be at DRAIN_ROW, so a powerup would cost a life.
+ */
 function bounceWalls(ball, world) {
   if (ball.x < 0) {
-    ball.x = 0;
-    ball.vx = Math.abs(ball.vx);
-    world.onWall();
+    if (!wrapTo(ball, world, FIELD_W - BALL_SIZE)) {
+      ball.x = 0;
+      ball.vx = Math.abs(ball.vx);
+      world.onWall();
+    }
   } else if (ball.x + BALL_SIZE > FIELD_W) {
-    ball.x = FIELD_W - BALL_SIZE;
-    ball.vx = -Math.abs(ball.vx);
-    world.onWall();
+    if (!wrapTo(ball, world, 0)) {
+      ball.x = FIELD_W - BALL_SIZE;
+      ball.vx = -Math.abs(ball.vx);
+      world.onWall();
+    }
   }
   if (ball.y < CEILING) {
     ball.y = CEILING;
     ball.vy = Math.abs(ball.vy);
     world.onWall();
   }
+}
+
+/**
+ * Move the ball to the opposite wall, keeping its heading.
+ *
+ * @returns false when the ball did not wrap.
+ */
+function wrapTo(ball, world, x) {
+  if (!world.wrap) return false;
+  for (const [cx, cy] of overlappedCells(x, ball.y, BALL_SIZE, BALL_SIZE)) {
+    if (world.isBlocked(cx, cy)) return false;
+  }
+  ball.x = x;
+  world.onWrap?.();
+  return true;
 }

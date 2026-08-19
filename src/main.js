@@ -3,8 +3,9 @@ import { surroundColor } from './render/surround.js';
 import { debugSnapshot } from './render/debug.js';
 import { createFieldCache, drawField } from './render/field.js';
 import {
-  drawPaddle, drawBalls, drawDrops, drawShots, drawFlashes, drawShield, DROP_COLORS,
+  drawPaddle, drawBalls, drawDrops, drawShots, drawFlashes, drawShield, drawWrapEdges, DROP_COLORS,
 } from './render/entities.js';
+import { hasEffect } from './engine/effects.js';
 import { drawHud } from './render/hud.js';
 import { drawScreens } from './render/screens.js';
 import { createInput } from './input.js';
@@ -100,6 +101,7 @@ function render() {
   renderer.clear(game.level?.background ?? '#000000');
   if (game.grid) {
     drawField(renderer, fieldCache, game.grid);
+    drawWrapEdges(renderer, hasEffect(game.effects, 'wrap'));
     drawPaddle(renderer, game.paddle);
     // Tinted while piercing: the state has a short, trip-based window, so it
     // needs to be visible at a glance rather than counted.

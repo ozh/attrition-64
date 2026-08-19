@@ -80,6 +80,13 @@ test('a drop past the drain row is discarded', () => {
   assert.deepEqual(caught, []);
 });
 
+test('a drop carries its own age, which is the blink clock', () => {
+  const d = createDrop('wrap', 10, 20, rng(0.5));
+  assert.equal(d.age, 0, 'a fresh drop starts at zero');
+  const { drops } = stepDrops([d], 0.25, paddle());
+  assert.ok(Math.abs(drops[0].age - 0.25) < 1e-9, `expected 0.25, got ${drops[0].age}`);
+});
+
 test('several drops are handled independently in one step', () => {
   const p = paddle();
   const box = paddleBox(p);
